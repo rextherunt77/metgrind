@@ -2,6 +2,9 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.4.2
+- **Logo:** orange rounded square, camera corner brackets around a kettlebell with a counted-rep check mark. Used as the header logo, favicon, home-screen icon and in a web app manifest.
+
 ## v0.4.1
 - METGrind is marked **beta** (page title and a badge next to the name): it is under development.
 
