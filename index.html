@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RepGrind camera test v0.1: air squats</title>
+<title>RepGrind camera test v0.2</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0f1115;color:#e8eaf0;font:15px/1.4 system-ui,sans-serif;padding:12px;max-width:640px;margin:0 auto}
@@ -33,12 +33,19 @@ small{color:#8b92a5}
 </style>
 </head>
 <body>
-<h1>Camera rep test: air squats <small id="ver">v0.1</small></h1>
+<h1>Camera rep test <small id="ver">v0.2</small></h1>
 <div class="sub">Standalone test, not part of RepGrind. Everything runs on this phone; no video is sent anywhere.</div>
+
+<div class="card" style="margin-top:0">
+  <label>Movement
+    <select id="mov"><option value="squat">Air squat</option><option value="burpee">Burpee (no jump)</option><option value="burpeej">Burpee with jump</option></select>
+  </label>
+  <small id="movHelp"></small>
+</div>
 
 <div class="stage" id="stage">
   <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
-  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">hips --</span> <span class="chip" id="leanTxt">lean --°</span> <span class="chip" id="hndTxt">hands --</span></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">--</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">--</span> <span class="chip" id="leanTxt">--</span> <span class="chip" id="hndTxt">hands --</span></div>
   <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
 </div>
 
@@ -52,7 +59,7 @@ small{color:#8b92a5}
   <button id="bEnd" class="sec">Stop set</button>
 </div>
 <div class="row">
-  <button id="bSim" class="sec">Simulate 6 squats (no camera)</button>
+  <button id="bSim" class="sec">Simulate (no camera)</button>
 </div>
 
 <div class="card">
@@ -62,10 +69,21 @@ small{color:#8b92a5}
   <label style="margin-top:8px">Hand gestures: both thumbs up = start, both open palms = stop
     <input type="checkbox" id="gest" checked>
   </label>
-  <small>With gestures on, squats only count after a start. Gestures are read only while you stand, held for about a second, and the hands must be clearly visible to the camera. Arms out front during a squat can look like open palms, so the stop gesture is ignored mid-squat.</small>
+  <small>With gestures on, reps only count after a start. Gestures are read only while you stand, held for about a second, and the hands must be clearly visible to the camera. Arms out front during a squat can look like open palms, so the stop gesture is ignored mid-rep.</small>
 </div>
 
-<div class="card">
+<div class="card" id="buCard" style="display:none">
+  <label>Floor: torso at least <b id="fv">60°</b> from vertical (lying or plank)</label>
+  <input type="range" id="floor" min="40" max="85" value="60">
+  <div id="jmpBox">
+    <label style="margin-top:8px">Jump: feet must rise at least <b id="jv">4%</b> of body height</label>
+    <input type="range" id="jump" min="2" max="15" value="4">
+    <label style="margin-top:8px">Hands above head at the top <input type="checkbox" id="hands" checked></label>
+  </div>
+  <small>A burpee counts when you go down until the torso is near horizontal, come back to standing (and with the jump variant, jump) . Film from the side with the phone fixed and level. The jump is measured against your standing foot height, so don't move the phone mid-set.</small>
+</div>
+
+<div class="card" id="sqCard">
   <label>Counts as a rep when knee angle goes below <b id="dv">110°</b></label>
   <input type="range" id="down" min="60" max="140" value="110">
   <label>and then back above <b id="uv">160°</b></label>
@@ -74,13 +92,16 @@ small{color:#8b92a5}
   <input type="range" id="hip" min="-10" max="15" value="0">
   <label>Chest upright: torso leans at most <b id="lv">45°</b> from vertical</label>
   <input type="range" id="lean" min="15" max="80" value="45">
-  <label style="margin-top:6px">Model
-    <select id="mdl"><option value="lite">lite (fast)</option><option value="full">full</option><option value="heavy">heavy (slow)</option></select>
-  </label>
   <small>A rep needs all three at the bottom: knee angle low enough, hips below the knees, torso upright. 180° knee = straight leg. Camera tilt affects the hip and lean numbers, so keep the phone level.</small>
 </div>
 
-<div class="card"><canvas id="gr" width="600" height="220"></canvas><small>Knee angle, last 8 s. Red line = bottom threshold, green = top.</small></div>
+<div class="card">
+  <label>Pose model
+    <select id="mdl"><option value="lite">lite (fast)</option><option value="full">full</option><option value="heavy">heavy (slow)</option></select>
+  </label>
+</div>
+
+<div class="card"><canvas id="gr" width="600" height="220"></canvas><small id="grCap"></small></div>
 
 <div class="card"><b>Reps</b><ul id="log"></ul><small id="fps"></small></div>
 
@@ -90,7 +111,8 @@ const V='0.10.14';
 const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V;
 const MODEL=k=>'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_'+k+'/float16/1/pose_landmarker_'+k+'.task';
 
-let DOWN=110, UP=160, HIPM=0, LEAN=45;
+let DOWN=110, UP=160, HIPM=0, LEAN=45, FLOORL=60, JUMPP=4, MOVE='squat';
+let bstate='stand', maxLean=0, base=null, bodyH=null, peak=0, handsOk=false, tTop=0, tDown=0;
 let reps=0, state='up', reached=false, minAng=180, bestHip=-99, leanAtBottom=null, kneeOk=false, hipOk=false, sm=null, tStart=0, hist=[];
 let active=false, gr=null, hold={kind:null,t0:0}, lastSwitch=-1e9, lastG=0, gmod=null;
 let lm=null, lmKey=null, stream=null, facing='user', running=false, audio=null, simTimer=null;
@@ -103,8 +125,8 @@ function say(t){
     setTimeout(()=>sy.speak(u),60)}catch(e){}
 }
 const SAY={
-  en:{no:'No rep',knee:'not deep enough',hip:'hips too high',lean:'leaning too far forward',and:' and ',go:'Go',stop:n=>'Stop. '+n+(n==1?' rep':' reps')},
-  fi:{no:'Ei toistoa',knee:'ei tarpeeksi syvä',hip:'lonkat liian ylhäällä',lean:'liikaa eteenpäin kallistunut',and:' ja ',go:'Aloita',stop:n=>'Lopeta. '+n+(n==1?' toisto':' toistoa')}
+  en:{no:'No rep',knee:'not deep enough',hip:'hips too high',lean:'leaning too far forward',floor:'not down to the floor',jump:'no jump',hands:'hands not overhead',and:' and ',go:'Go',stop:n=>'Stop. '+n+(n==1?' rep':' reps')},
+  fi:{no:'Ei toistoa',knee:'ei tarpeeksi syvä',hip:'lonkat liian ylhäällä',lean:'liikaa eteenpäin kallistunut',floor:'ei maahan asti',jump:'ei hyppyä',hands:'kädet eivät ylhäällä',and:' ja ',go:'Aloita',stop:n=>'Lopeta. '+n+(n==1?' toisto':' toistoa')}
 };
 const counting=()=>active||!$('gest').checked;
 function setActive(a){
@@ -112,6 +134,9 @@ function setActive(a){
 }
 function startSet(){reset();setActive(true);beep();say(SAY[$('voice').value||'en'].go)}
 function stopSet(){const n=reps;setActive(false);beep();say(SAY[$('voice').value||'en'].stop(n))}
+function sayNo(keys){const T=SAY[$('voice').value||'en'];say(T.no+', '+keys.map(k=>T[k]).join(T.and))}
+function goodRep(txt){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · '+txt)}
+const standingNow=()=>MOVE==='squat'?state==='up':bstate==='stand';
 function msg(t){$('msg').textContent=t}
 function beep(){try{if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.09)}catch(e){}}
 function logRep(txt,no){const li=document.createElement('li');if(no)li.className='no';li.textContent=txt;$('log').prepend(li)}
@@ -126,7 +151,7 @@ function angle3(a,b,c){
 
 // the counter: up -> going down -> back up = 1 rep, only if the bottom met all three rules
 // m = {knee: degrees, hip: cm hips are below knees, lean: degrees torso from vertical or null}
-function feed(m,t){
+function feedSquat(m,t){
   const a=m.knee;
   sm=sm==null?a:sm+0.5*(a-sm);
   hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
@@ -144,16 +169,15 @@ function feed(m,t){
     if(sm>=UP){
       const dur=(t-tStart)/1000;
       const leanOk=leanAtBottom==null||leanAtBottom<=LEAN;
-      if(kneeOk&&hipOk&&leanOk&&dur>0.4){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · knee '+Math.round(minAng)+'° · hips '+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm · lean '+(leanAtBottom==null?'--':Math.round(leanAtBottom))+'° · '+dur.toFixed(1)+' s')}
+      if(kneeOk&&hipOk&&leanOk&&dur>0.4){goodRep('knee '+Math.round(minAng)+'° · hips '+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm · lean '+(leanAtBottom==null?'--':Math.round(leanAtBottom))+'° · '+dur.toFixed(1)+' s')}
       else if(minAng<UP-12&&dur>0.3){
         const why=[];
         if(!kneeOk)why.push('knee only '+Math.round(minAng)+'° (need '+DOWN+'°)');
         if(!hipOk)why.push('hips not below knees ('+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm, need '+HIPM+')');
         if(!leanOk)why.push('leaning '+Math.round(leanAtBottom)+'° (max '+LEAN+'°)');
         if(why.length){logRep('No rep: '+why.join('; '),true);
-          const T=SAY[$('voice').value||'en'],c=[];
-          if(!kneeOk)c.push(T.knee);if(!hipOk)c.push(T.hip);if(!leanOk)c.push(T.lean);
-          say(T.no+', '+c.join(T.and))}
+          const c=[];if(!kneeOk)c.push('knee');if(!hipOk)c.push('hip');if(!leanOk)c.push('lean');
+          sayNo(c)}
       }
       state='up';
     }
@@ -162,13 +186,62 @@ function feed(m,t){
   drawGraph();
 }
 
+// burpee: standing -> down until the torso is near horizontal -> back to standing (-> jump, hands up)
+// m = {lean: torso degrees from vertical, knee: degrees or null, ankleY, noseY, wristY: image y (0 = top) or null}
+function feedBurpee(m,t){
+  const a=m.lean;
+  sm=sm==null?a:sm+0.5*(a-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='torso '+Math.round(sm)+'°';
+  $('hipTxt').textContent='knee '+(m.knee==null?'--':Math.round(m.knee))+'°';
+  const jumpNow=base!=null&&bodyH?Math.max(0,(base-m.ankleY)/bodyH*100):0;
+  $('leanTxt').textContent='feet up '+jumpNow.toFixed(1)+'%';
+  if(!counting()){bstate='stand';$('stTxt').textContent='standing';drawGraph();return}
+  const upright=sm<=25&&(m.knee==null||m.knee>=150);
+  const jv=MOVE==='burpeej';
+  if(bstate==='stand'){
+    if(upright){base=base==null?m.ankleY:base+0.05*(m.ankleY-base);const h=m.ankleY-m.noseY;if(h>0.2)bodyH=bodyH==null?h:bodyH+0.05*(h-bodyH)}
+    if(sm>=40){bstate='down';maxLean=sm;tDown=t}
+  }else if(bstate==='down'){
+    maxLean=Math.max(maxLean,sm);
+    if(sm<=30){
+      const dur=(t-tDown)/1000;
+      if(dur<0.5){bstate='stand'}
+      else if(maxLean<FLOORL){logRep('No rep: not down to the floor (torso only '+Math.round(maxLean)+'°, need '+FLOORL+'°)',true);sayNo(['floor']);bstate='stand'}
+      else bstate='rise';
+    }
+  }else if(bstate==='rise'){
+    if(sm>=40){bstate='down'}
+    else if(upright){
+      if(jv){bstate='jump';tTop=t;peak=0;handsOk=false}
+      else{goodRep('floor '+Math.round(maxLean)+'° · '+((t-tDown)/1000).toFixed(1)+' s');bstate='stand'}
+    }
+  }else if(bstate==='jump'){
+    peak=Math.max(peak,bodyH?(base-m.ankleY)/bodyH*100:0);
+    if(m.wristY!=null&&m.wristY<m.noseY)handsOk=true;
+    const needH=$('hands').checked;
+    if(peak>=JUMPP&&(handsOk||!needH)){goodRep('floor '+Math.round(maxLean)+'° · jump '+peak.toFixed(1)+'% · '+((t-tDown)/1000).toFixed(1)+' s');bstate='stand'}
+    else if(t-tTop>1500){
+      const c=[],w=[];
+      if(peak<JUMPP){c.push('jump');w.push('no jump (feet up '+peak.toFixed(1)+'%, need '+JUMPP+'%)')}
+      if(needH&&!handsOk){c.push('hands');w.push('hands not above head')}
+      logRep('No rep: '+w.join('; '),true);sayNo(c);bstate='stand';
+    }
+  }
+  $('stTxt').textContent={stand:'standing',down:'going down',rise:'coming up',jump:'jump!'}[bstate];
+  drawGraph();
+}
+function feed(m,t){MOVE==='squat'?feedSquat(m,t):feedBurpee(m,t)}
+
 function drawGraph(){
   const c=$('gr'),x=c.getContext('2d'),W=c.width,H=c.height;
   x.clearRect(0,0,W,H);
-  const y=a=>H-((a-40)/(190-40))*H;
+  const sq=MOVE==='squat',lo0=sq?40:0,hi0=sq?190:100;
+  const y=a=>H-((a-lo0)/(hi0-lo0))*H;
   x.lineWidth=2;
-  x.strokeStyle='#e5484d';x.beginPath();x.moveTo(0,y(DOWN));x.lineTo(W,y(DOWN));x.stroke();
-  x.strokeStyle='#3fb950';x.beginPath();x.moveTo(0,y(UP));x.lineTo(W,y(UP));x.stroke();
+  const l1=sq?DOWN:FLOORL,l2=sq?UP:25;
+  x.strokeStyle='#e5484d';x.beginPath();x.moveTo(0,y(l1));x.lineTo(W,y(l1));x.stroke();
+  x.strokeStyle='#3fb950';x.beginPath();x.moveTo(0,y(l2));x.lineTo(W,y(l2));x.stroke();
   if(hist.length<2)return;
   const t1=hist[hist.length-1].t;
   x.strokeStyle='#6ea8fe';x.lineWidth=3;x.beginPath();
@@ -176,12 +249,20 @@ function drawGraph(){
   x.stroke();
 }
 
-function reset(){reps=0;state='up';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='knee --°';$('stTxt').textContent='ready';$('hipTxt').textContent='hips --';$('leanTxt').textContent='lean --°';drawGraph()}
+function reset(){reps=0;state='up';bstate='stand';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='--';$('stTxt').textContent='ready';$('hipTxt').textContent='--';$('leanTxt').textContent='--';drawGraph()}
+function setMove(m){
+  MOVE=m;const sq=m==='squat';
+  $('sqCard').style.display=sq?'':'none';$('buCard').style.display=sq?'none':'';$('jmpBox').style.display=m==='burpeej'?'':'none';
+  $('movHelp').textContent=sq?'Side or front view. A rep needs knee angle, hips below knees and an upright torso.':(m==='burpee'?'Side view. Down to the floor, then stand up. Counts when you are fully upright.':'Side view. Down to the floor, stand up and jump (hands above head). Counts at the jump.');
+  $('grCap').textContent=sq?'Knee angle, last 8 s. Red = bottom threshold, green = top.':'Torso angle from vertical, last 8 s. Red = floor line, green = upright line.';
+  reset();
+}
 
 // ---- simulation (checks the counting logic without a camera) ----
 function simulate(){
   if(simTimer){clearInterval(simTimer);simTimer=null}
   reset();setActive(true);
+  if(MOVE!=='squat')return simulateBurpee();
   // knee, hips below knees (cm), torso lean. Expected: reps 1,2,5 count; 3 (hips high), 4 (leaning), 6 (shallow) do not.
   const cases=[[80,4,25],[85,2,30],[82,-5,20],[80,5,65],[78,6,35],[135,-12,20]];
   let f=0;const fps=30,per=2.4,stand=0.6;
@@ -193,6 +274,29 @@ function simulate(){
     const p=t-i*(per+stand),[kn,hp,ln]=cases[i];
     let k=0;if(p<per)k=0.5-0.5*Math.cos(2*Math.PI*p/per);
     feed({knee:170-(170-kn)*k+(Math.random()-.5)*3,hip:-25+(hp+25)*k,lean:10+(ln-10)*k},t*1000);f++;
+  },1000/fps);
+}
+
+function simulateBurpee(){
+  const jv=MOVE==='burpeej';
+  // [max torso lean, jump height in % of body, hands up]. No-jump: reps 1,2,4 count, 3 (not down) does not.
+  // With jump: reps 1,2,5 count; 3 (no jump) and 4 (hands down) do not.
+  const cases=jv?[[85,8,true],[88,7,true],[85,0,true],[85,8,false],[84,9,true]]:[[85,0,true],[88,0,true],[48,0,true],[86,0,true]];
+  let f=0;const fps=30,per=5;
+  const total=cases.length*per*fps;
+  msg('Simulating '+cases.length+' burpees: '+(jv?'3 should count, 1 has no jump, 1 has hands down.':'3 should count, 1 is not down to the floor.'));
+  simTimer=setInterval(()=>{
+    const t=f/fps,i=Math.floor(t/per);
+    if(f>=total||i>=cases.length){clearInterval(simTimer);simTimer=null;msg('Simulation done.');return}
+    const p=t-i*per,[ml,jh,hu]=cases[i];
+    const r=(a,b,u,v)=>a+(b-a)*Math.max(0,Math.min(1,(p-u)/(v-u)));
+    let lean=5,knee=175,ay=0.9;
+    if(p>=0.8&&p<1.6){lean=r(5,ml,0.8,1.6);knee=r(175,90,0.8,1.6)}
+    else if(p>=1.6&&p<2.6){lean=ml;knee=r(90,170,1.6,1.8)}
+    else if(p>=2.6&&p<3.4){lean=r(ml,5,2.6,3.4);knee=r(170,175,2.6,3.4)}
+    if(p>=3.4&&p<3.9)ay=0.9-(jh/100*0.7)*Math.sin(Math.PI*(p-3.4)/0.5);
+    const wy=(p>=3.4&&p<3.9&&hu)?0.1:0.55;
+    feed({lean:lean+(Math.random()-.5)*2,knee,ankleY:ay+(Math.random()-.5)*0.004,noseY:0.2,wristY:wy},t*1000);f++;
   },1000/fps);
 }
 
@@ -242,12 +346,12 @@ function gesture(names,now){
   else if(names.length===2&&names.every(n=>n==='Open_Palm'))kind='stop';
   $('hndTxt').textContent=kind==='start'?'hands: 👍👍':kind==='stop'?'hands: ✋✋':'hands: '+(names.length?names.map(n=>n||'?').join(' + '):'--');
   const wanted=(kind==='start'&&!active)||(kind==='stop'&&active);
-  if(kind&&wanted&&state==='up'&&now-lastSwitch>2500){
+  if(kind&&wanted&&standingNow()&&now-lastSwitch>2500){
     if(hold.kind!==kind)hold={kind,t0:now};
     else if(now-hold.t0>(kind==='start'?700:1000)){hold={kind:null,t0:0};lastSwitch=now;kind==='start'?startSet():stopSet()}
   }else hold={kind:null,t0:0};
 }
-window.__t={gesture,feed,get active(){return active},get reps(){return reps},setActive};
+window.__t={gesture,feed,setMove,get active(){return active},get reps(){return reps},setActive};
 const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
 function loop(){
   if(!running)return;
@@ -262,23 +366,27 @@ function loop(){
     const L=r.landmarks&&r.landmarks[0],W=r.worldLandmarks&&r.worldLandmarks[0];
     if(L&&W){
       const vis=i=>Math.min(L[i].visibility??1,1);
-      const side=s=>{const h=s?24:23,k=s?26:25,a=s?28:27;return{h,k,a,v:Math.min(vis(h),vis(k),vis(a))}};
-      const l=side(0),rr=side(1);
-      const use=[l,rr].filter(s=>s.v>0.5);
+      const avg=arr=>arr.length?arr.reduce((p,c)=>p+c,0)/arr.length:null;
+      const sides=[0,1].map(q=>({h:q?24:23,k:q?26:25,a:q?28:27,sh:q?12:11}));
+      const legOk=sides.filter(q=>Math.min(vis(q.h),vis(q.k),vis(q.a))>0.5);
+      const torsoOk=sides.filter(q=>Math.min(vis(q.h),vis(q.sh))>0.5);
       x.lineWidth=4;
-      BONES.forEach(([a,b])=>{x.strokeStyle='#ffffffaa';x.beginPath();x.moveTo(L[a].x*ov.width,L[a].y*ov.height);x.lineTo(L[b].x*ov.width,L[b].y*ov.height);x.stroke()});
-      if(use.length){
-        const angs=use.map(s=>angle3(W[s.h],W[s.k],W[s.a])).filter(a=>a!=null);
-        const a=angs.reduce((p,c)=>p+c,0)/angs.length;
-        const avg=arr=>arr.length?arr.reduce((p,c)=>p+c,0)/arr.length:null;
-        // world y points down, so hip.y > knee.y means the hip is lower than the knee
-        const hipCm=avg(use.map(s=>(W[s.h].y-W[s.k].y)*100));
-        const leans=use.filter(s=>Math.min(vis(s.h),vis(s.h-12))>0.5).map(s=>{const sh=W[s.h-12],hp=W[s.h],v=[sh.x-hp.x,sh.y-hp.y,sh.z-hp.z],n=Math.hypot(...v);return n?Math.acos(Math.max(-1,Math.min(1,-v[1]/n)))*180/Math.PI:null}).filter(x=>x!=null);
-        const lean=avg(leans);
-        usedSide=use.length==2?'both legs':(use[0]===l?'left leg':'right leg');
-        use.forEach(s=>{x.strokeStyle='#3fb950';x.lineWidth=6;x.beginPath();x.moveTo(L[s.h].x*ov.width,L[s.h].y*ov.height);x.lineTo(L[s.k].x*ov.width,L[s.k].y*ov.height);x.lineTo(L[s.a].x*ov.width,L[s.a].y*ov.height);x.stroke()});
-        feed({knee:a,hip:hipCm,lean},now);msg(' ');
-      }else msg('Legs not clearly visible. Step back or change the angle.');
+      BONES.forEach(([p,q])=>{x.strokeStyle='#ffffffaa';x.beginPath();x.moveTo(L[p].x*ov.width,L[p].y*ov.height);x.lineTo(L[q].x*ov.width,L[q].y*ov.height);x.stroke()});
+      legOk.forEach(q=>{x.strokeStyle='#3fb950';x.lineWidth=6;x.beginPath();x.moveTo(L[q.h].x*ov.width,L[q.h].y*ov.height);x.lineTo(L[q.k].x*ov.width,L[q.k].y*ov.height);x.lineTo(L[q.a].x*ov.width,L[q.a].y*ov.height);x.stroke()});
+      const knee=avg(legOk.map(q=>angle3(W[q.h],W[q.k],W[q.a])).filter(v=>v!=null));
+      // world y points down, so hip.y > knee.y means the hip is lower than the knee
+      const hipCm=avg(legOk.map(q=>(W[q.h].y-W[q.k].y)*100));
+      const lean=avg(torsoOk.map(q=>{const sh=W[q.sh],hp=W[q.h],v=[sh.x-hp.x,sh.y-hp.y,sh.z-hp.z],n=Math.hypot(...v);return n?Math.acos(Math.max(-1,Math.min(1,-v[1]/n)))*180/Math.PI:null}).filter(v=>v!=null));
+      usedSide=(legOk.length==2?'both legs':legOk.length?(legOk[0].h==23?'left leg':'right leg'):'no legs')+', '+torsoOk.length+' torso side(s)';
+      if(MOVE==='squat'){
+        if(knee!=null){feed({knee,hip:hipCm,lean},now);msg(' ')}
+        else msg('Legs not clearly visible. Step back or change the angle.');
+      }else{
+        if(lean!=null){
+          const ankleY=avg(sides.map(q=>L[q.a].y)),wrOk=Math.min(vis(15),vis(16))>0.3;
+          feed({lean,knee,ankleY,noseY:L[0].y,wristY:wrOk?Math.max(L[15].y,L[16].y):null},now);msg(' ');
+        }else msg('Torso not clearly visible. Step back or film from the side.');
+      }
     }else msg('No body found. Step back so you fit in the picture.');
   }
   requestAnimationFrame(loop);
@@ -295,8 +403,11 @@ $('down').oninput=e=>{DOWN=+e.target.value;$('dv').textContent=DOWN+'°';drawGra
 $('hip').oninput=e=>{HIPM=+e.target.value;$('hv').textContent=HIPM+' cm'};
 $('lean').oninput=e=>{LEAN=+e.target.value;$('lv').textContent=LEAN+'°'};
 $('up').oninput=e=>{UP=+e.target.value;$('uv').textContent=UP+'°';drawGraph()};
+$('mov').onchange=e=>setMove(e.target.value);
+$('floor').oninput=e=>{FLOORL=+e.target.value;$('fv').textContent=FLOORL+'°';drawGraph()};
+$('jump').oninput=e=>{JUMPP=+e.target.value;$('jv').textContent=JUMPP+'%'};
 $('mdl').onchange=()=>{if(running){stop();start()}};
-drawGraph();
+setMove('squat');
 </script>
 </body>
 </html>

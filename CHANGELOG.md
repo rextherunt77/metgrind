@@ -2,6 +2,11 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## 0.2 (2026-11-24)
+- New movement selector: air squat, burpee (no jump), burpee with jump.
+- Burpee: counts when the torso goes near horizontal (floor line slider) and you come back upright. With the jump variant, the feet must also leave the floor (jump height slider) and, optionally, the hands go above the head.
+- Voice causes for burpees: not down to the floor, no jump, hands not overhead.
+
 ## 0.1 (2026-11-24)
 First versioned release. Air squats only.
 - Phone camera plus MediaPipe pose model, everything on the phone.
