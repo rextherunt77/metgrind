@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RepGrind camera test: air squats</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#e8eaf0;font:15px/1.4 system-ui,sans-serif;padding:12px;max-width:640px;margin:0 auto}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:#8b92a5;font-size:13px;margin-bottom:10px}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center}
+.stage .inner{position:absolute;inset:0}
+.stage.mirror .inner{transform:scaleX(-1)}
+video,canvas.ov{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.hud{position:absolute;left:10px;top:8px;z-index:3;pointer-events:none}
+.big{font-size:84px;font-weight:800;line-height:1;text-shadow:0 2px 8px #000}
+.chip{display:inline-block;margin-top:4px;background:#000a;padding:3px 9px;border-radius:99px;font-size:13px}
+.msg{position:absolute;left:0;right:0;bottom:0;z-index:3;background:#000b;padding:6px 10px;font-size:13px}
+.row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+button{flex:1;min-width:110px;background:#2a6df4;color:#fff;border:0;border-radius:10px;padding:12px 8px;font-size:15px;font-weight:600}
+button.sec{background:#262b36;color:#cfd4e2}
+button:disabled{opacity:.4}
+.card{background:#171a21;border-radius:12px;padding:10px 12px;margin:10px 0}
+.card label{display:flex;justify-content:space-between;font-size:13px;color:#aab0c0}
+.card input[type=range]{width:100%}
+select{background:#262b36;color:#e8eaf0;border:0;border-radius:8px;padding:8px}
+canvas#gr{width:100%;height:110px;background:#0b0d11;border-radius:8px;display:block}
+ul{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto;font-size:13px}
+li{padding:3px 0;border-bottom:1px solid #20242d}
+li.no{color:#e0a458}
+small{color:#8b92a5}
+</style>
+</head>
+<body>
+<h1>Camera rep test: air squats</h1>
+<div class="sub">Standalone test, not part of RepGrind. Everything runs on this phone; no video is sent anywhere.</div>
+
+<div class="stage" id="stage">
+  <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="stTxt">ready</span></div>
+  <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
+</div>
+
+<div class="row">
+  <button id="bStart">Start camera</button>
+  <button id="bFlip" class="sec" disabled>Flip camera</button>
+  <button id="bReset" class="sec">Reset</button>
+</div>
+<div class="row">
+  <button id="bSim" class="sec">Simulate 5 squats (no camera)</button>
+</div>
+
+<div class="card">
+  <label>Counts as a rep when knee angle goes below <b id="dv">110°</b></label>
+  <input type="range" id="down" min="60" max="140" value="110">
+  <label>and then back above <b id="uv">160°</b></label>
+  <input type="range" id="up" min="130" max="178" value="160">
+  <label style="margin-top:6px">Model
+    <select id="mdl"><option value="lite">lite (fast)</option><option value="full">full</option><option value="heavy">heavy (slow)</option></select>
+  </label>
+  <small>180° = straight leg, about 90° = thighs parallel. Lower the first slider to demand a deeper squat.</small>
+</div>
+
+<div class="card"><canvas id="gr" width="600" height="220"></canvas><small>Knee angle, last 8 s. Red line = bottom threshold, green = top.</small></div>
+
+<div class="card"><b>Reps</b><ul id="log"></ul><small id="fps"></small></div>
+
+<script type="module">
+const $=id=>document.getElementById(id);
+const V='0.10.14';
+const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V;
+const MODEL=k=>'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_'+k+'/float16/1/pose_landmarker_'+k+'.task';
+
+let DOWN=110, UP=160;
+let reps=0, state='up', reached=false, minAng=180, sm=null, tStart=0, hist=[];
+let lm=null, lmKey=null, stream=null, facing='user', running=false, audio=null, simTimer=null;
+let lastVT=-1, frames=0, fpsT=performance.now(), usedSide='';
+
+function msg(t){$('msg').textContent=t}
+function beep(){try{if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.09)}catch(e){}}
+function logRep(txt,no){const li=document.createElement('li');if(no)li.className='no';li.textContent=txt;$('log').prepend(li)}
+
+// angle at b between a-b and c-b, in 3D
+function angle3(a,b,c){
+  const v1=[a.x-b.x,a.y-b.y,a.z-b.z],v2=[c.x-b.x,c.y-b.y,c.z-b.z];
+  const n=Math.hypot(...v1)*Math.hypot(...v2);if(!n)return null;
+  const d=v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
+  return Math.acos(Math.max(-1,Math.min(1,d/n)))*180/Math.PI;
+}
+
+// the counter: up -> going down -> reached depth -> back up = 1 rep
+function feed(a,t){
+  sm=sm==null?a:sm+0.5*(a-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='knee '+Math.round(sm)+'°';
+  if(state==='up'){
+    if(sm<UP){state='down';reached=false;minAng=sm;tStart=t}
+  }else{
+    minAng=Math.min(minAng,sm);
+    if(sm<=DOWN)reached=true;
+    if(sm>=UP){
+      const dur=(t-tStart)/1000;
+      if(reached&&dur>0.4){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · bottom '+Math.round(minAng)+'° · '+dur.toFixed(1)+' s')}
+      else if(minAng<UP-12&&dur>0.3){logRep('No rep · only down to '+Math.round(minAng)+'° (need '+DOWN+'°)',true)}
+      state='up';
+    }
+  }
+  $('stTxt').textContent=state==='up'?'standing':(reached?'deep enough, stand up':'going down');
+  drawGraph();
+}
+
+function drawGraph(){
+  const c=$('gr'),x=c.getContext('2d'),W=c.width,H=c.height;
+  x.clearRect(0,0,W,H);
+  const y=a=>H-((a-40)/(190-40))*H;
+  x.lineWidth=2;
+  x.strokeStyle='#e5484d';x.beginPath();x.moveTo(0,y(DOWN));x.lineTo(W,y(DOWN));x.stroke();
+  x.strokeStyle='#3fb950';x.beginPath();x.moveTo(0,y(UP));x.lineTo(W,y(UP));x.stroke();
+  if(hist.length<2)return;
+  const t1=hist[hist.length-1].t;
+  x.strokeStyle='#6ea8fe';x.lineWidth=3;x.beginPath();
+  hist.forEach((p,i)=>{const px=W-((t1-p.t)/8000)*W;i?x.lineTo(px,y(p.a)):x.moveTo(px,y(p.a))});
+  x.stroke();
+}
+
+function reset(){reps=0;state='up';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='knee --°';$('stTxt').textContent='ready';drawGraph()}
+
+// ---- simulation (checks the counting logic without a camera) ----
+function simulate(){
+  if(simTimer){clearInterval(simTimer);simTimer=null}
+  reset();
+  const depths=[80,85,90,135,82]; // 4th is too shallow: must not count
+  let f=0;const fps=30,per=2.4,stand=0.6;
+  const total=depths.length*(per+stand)*fps;
+  msg('Simulating: 5 squats, the 4th one is too shallow and should not count.');
+  simTimer=setInterval(()=>{
+    const t=f/fps,i=Math.floor(t/(per+stand));
+    if(f>=total||i>=depths.length){clearInterval(simTimer);simTimer=null;msg('Simulation done: expected 4 reps and 1 "no rep".');return}
+    const p=t-i*(per+stand);
+    let a=170;
+    if(p<per){const k=0.5-0.5*Math.cos(2*Math.PI*p/per);a=170-(170-depths[i])*k}
+    feed(a+(Math.random()-.5)*3,t*1000);f++;
+  },1000/fps);
+}
+
+// ---- camera + model ----
+async function loadModel(){
+  const key=$('mdl').value;
+  if(lm&&lmKey===key)return;
+  msg('Loading the pose model (a few MB, first time only)...');
+  const mod=await import(CDN+'/+esm');
+  const fs=await mod.FilesetResolver.forVisionTasks(CDN+'/wasm');
+  const opts=d=>({baseOptions:{modelAssetPath:MODEL(key),delegate:d},runningMode:'VIDEO',numPoses:1});
+  try{lm=await mod.PoseLandmarker.createFromOptions(fs,opts('GPU'))}
+  catch(e){lm=await mod.PoseLandmarker.createFromOptions(fs,opts('CPU'))}
+  lmKey=key;
+}
+async function openCam(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:640},height:{ideal:480}},audio:false});
+  const v=$('v');v.srcObject=stream;await v.play();
+  const ov=$('ov');ov.width=v.videoWidth;ov.height=v.videoHeight;
+  $('stage').style.aspectRatio=v.videoWidth+'/'+v.videoHeight;
+  $('stage').classList.toggle('mirror',facing==='user');
+}
+async function start(){
+  try{
+    audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    await loadModel();
+    msg('Starting the camera...');
+    await openCam();
+    reset();running=true;$('bFlip').disabled=false;$('bStart').textContent='Stop';
+    msg('Stand so your whole body is visible. Squat!');
+    requestAnimationFrame(loop);
+  }catch(e){msg('Could not start: '+(e&&e.message||e)+(location.protocol==='file:'?' (camera needs https, not a local file)':''));console.error(e)}
+}
+function stop(){running=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('bStart').textContent='Start camera';$('bFlip').disabled=true;msg('Stopped.')}
+
+const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+function loop(){
+  if(!running)return;
+  const v=$('v');
+  if(v.readyState>=2&&v.currentTime!==lastVT){
+    lastVT=v.currentTime;
+    const now=performance.now();
+    const r=lm.detectForVideo(v,now);
+    frames++;if(now-fpsT>1000){$('fps').textContent=frames+' frames/s analysed · side used: '+usedSide;frames=0;fpsT=now}
+    const ov=$('ov'),x=ov.getContext('2d');x.clearRect(0,0,ov.width,ov.height);
+    const L=r.landmarks&&r.landmarks[0],W=r.worldLandmarks&&r.worldLandmarks[0];
+    if(L&&W){
+      const vis=i=>Math.min(L[i].visibility??1,1);
+      const side=s=>{const h=s?24:23,k=s?26:25,a=s?28:27;return{h,k,a,v:Math.min(vis(h),vis(k),vis(a))}};
+      const l=side(0),rr=side(1);
+      const use=[l,rr].filter(s=>s.v>0.5);
+      x.lineWidth=4;
+      BONES.forEach(([a,b])=>{x.strokeStyle='#ffffffaa';x.beginPath();x.moveTo(L[a].x*ov.width,L[a].y*ov.height);x.lineTo(L[b].x*ov.width,L[b].y*ov.height);x.stroke()});
+      if(use.length){
+        const angs=use.map(s=>angle3(W[s.h],W[s.k],W[s.a])).filter(a=>a!=null);
+        const a=angs.reduce((p,c)=>p+c,0)/angs.length;
+        usedSide=use.length==2?'both legs':(use[0]===l?'left leg':'right leg');
+        use.forEach(s=>{x.strokeStyle='#3fb950';x.lineWidth=6;x.beginPath();x.moveTo(L[s.h].x*ov.width,L[s.h].y*ov.height);x.lineTo(L[s.k].x*ov.width,L[s.k].y*ov.height);x.lineTo(L[s.a].x*ov.width,L[s.a].y*ov.height);x.stroke()});
+        feed(a,now);msg(' ');
+      }else msg('Legs not clearly visible. Step back or change the angle.');
+    }else msg('No body found. Step back so you fit in the picture.');
+  }
+  requestAnimationFrame(loop);
+}
+
+$('bStart').onclick=()=>running?stop():start();
+$('bFlip').onclick=async()=>{facing=facing==='user'?'environment':'user';try{await openCam()}catch(e){msg('Flip failed: '+e.message)}};
+$('bReset').onclick=reset;
+$('bSim').onclick=simulate;
+$('down').oninput=e=>{DOWN=+e.target.value;$('dv').textContent=DOWN+'°';drawGraph()};
+$('up').oninput=e=>{UP=+e.target.value;$('uv').textContent=UP+'°';drawGraph()};
+$('mdl').onchange=()=>{if(running){stop();start()}};
+drawGraph();
+</script>
+</body>
+</html>
