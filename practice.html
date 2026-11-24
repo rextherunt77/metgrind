@@ -559,7 +559,7 @@ async function openCam(){
   $('stage').classList.toggle('mirror',camId?fm==='user':facing==='user');
   await setupZoom();
 }
-async function start(){
+async function start(){FR.bad=true;FR.said='';FR.cand=null;
   try{
     audio=audio||new (window.AudioContext||window.webkitAudioContext)();
     await loadModel();
@@ -588,9 +588,9 @@ window.__t={gesture,feed,setMove,get active(){return active},get reps(){return r
 const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
 
 // ---- voice framing help: tells the athlete where to move until the whole body is in the picture ----
-SAY.en.f={left:'Move left',right:'Move right',back:'Step back',closer:'Step closer',none:'I cannot see you. Step into the picture',ok:'Good. You are in the frame'};
-SAY.fi.f={left:'Siirry vasemmalle',right:'Siirry oikealle',back:'Astu taaksepäin',closer:'Astu lähemmäs',none:'En näe sinua. Astu kuvaan',ok:'Hyvä. Olet kuvassa'};
-const FR={cand:null,t0:0,lastSay:0,said:'',bad:false};
+SAY.en.f={left:'Move left',right:'Move right',back:'Step back',closer:'Step closer',none:'I cannot see you. Step into the picture',ok:'Good, you are in the frame. Ready'};
+SAY.fi.f={left:'Siirry vasemmalle',right:'Siirry oikealle',back:'Astu taaksepäin',closer:'Astu lähemmäs',none:'En näe sinua. Astu kuvaan',ok:'Hyvä, olet kuvassa. Valmis'};
+const FR={cand:null,t0:0,lastSay:0,said:'',bad:true};
 function framing(L,vis,now){
   if(MC&&(MC.state==='run'||MC.state==='done'))return;      // never talk over a running workout
   if(active&&!window.__frameAlways)return;                   // nor over a running set

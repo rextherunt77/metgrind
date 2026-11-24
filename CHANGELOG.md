@@ -4,7 +4,7 @@ Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
 ## v0.5.0
 - **Practice movements page** (`practice.html`): movement testing, sliders, simulate and graph moved off the METGrind page. METGrind itself now shows only the metcon, camera, WOD Code and results. The sliders are shared between the pages.
-- **Voice framing help:** before a workout the app says "Move left", "Move right", "Step back" or "Step closer" until you are fully in the picture, and "Good" when you are. Uses the voice setting; silent during a workout.
+- **Voice framing help:** before a workout the app says "Move left", "Move right", "Step back" or "Step closer" until you are fully in the picture, then "Good, you are in the frame. Ready". Uses the voice setting; silent during a workout.
 - **Results and charts:** rep chart, results and history like REPGrind.
 - **WOD Code:** the camera phone can send reps to a coach device and follow its start.
 - Build: `python3 tools/build.py` makes `index.html` and `practice.html` from `src/app.html`.
