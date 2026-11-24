@@ -2,6 +2,9 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.4.3
+- **New logo:** a barbell with the same claw marks as REPGrind, on the orange square. Replaces the kettlebell logo of v0.4.2.
+
 ## v0.4.2
 - **Logo:** orange rounded square, camera corner brackets around a kettlebell with a counted-rep check mark. Used as the header logo, favicon, home-screen icon and in a web app manifest.
 
