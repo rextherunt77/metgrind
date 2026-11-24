@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<title>METGrind: practice movements (beta)</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--bg:#111418;--card:#1b2027;--line:#2a313b;--txt:#e9edf2;--mut:#8a95a3;--acc:#ff8c00;--ink:#14171c;--acc2:#3fb6ff;--ok:#3ccf7a;--warn:#ffc53d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:12px 12px 40px;max-width:720px;margin:auto}
+h1{font-size:17px;margin:0 0 2px;letter-spacing:.5px}
+h1 b{color:var(--acc)}
+.m-metcon .testonly,.m-test .metonly{display:none!important}
+a.nav{display:inline-block;margin:2px 0 8px;color:var(--acc);font-size:14px;font-weight:600;text-decoration:none}
+.beta{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink);background:var(--warn);border-radius:6px;padding:2px 6px;vertical-align:2px;margin-left:4px}
+.mct{font-size:19px;font-weight:800;margin:6px 0}.mcs{color:var(--mut);font-size:13px;margin:6px 0}
+#mcList,#mcSplits{padding-left:22px;margin:6px 0;list-style:decimal;max-height:none;font-size:14px}
+#mcList li.cur{color:var(--acc);font-weight:700}#mcList li.dn{color:var(--mut);text-decoration:line-through}
+input.wci,input#mcCode{flex:1;min-width:0;background:#151a20;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:11px;font-size:14px;font-family:inherit}
+.card h2{font-size:14px;margin:0 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.7px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tile{background:#151a20;border-radius:10px;padding:10px}.tile .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.6px}.tile .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}.tile .bad{color:var(--warn)}
+.note{color:var(--mut);font-size:13px}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}th{color:var(--mut);font-weight:600;text-align:left;font-size:12px}td,th{padding:6px 4px;border-bottom:1px solid var(--line)}
+canvas#c1,canvas#c2{width:100%;height:150px;background:#151a20;border-radius:10px;display:block}.leg{display:flex;gap:12px;font-size:12px;color:var(--mut);margin-top:6px;flex-wrap:wrap}.leg .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.rhi{display:block;width:100%;text-align:left;margin-top:6px;font-size:14px;background:#151a20;padding:10px 12px}.rhi .rhn{display:block;color:var(--mut);font-weight:400;font-size:12px;margin-top:2px}
+#mgRace svg{width:100%;display:block}
+h1 small{color:var(--acc);font-weight:600;letter-spacing:0}
+.sub{color:var(--mut);font-size:13px;margin-bottom:8px}
+.stage{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;margin:10px 0}
+.stage .inner{position:absolute;inset:0}
+.stage.mirror .inner{transform:scaleX(-1)}
+video,canvas.ov{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.hud{position:absolute;left:10px;top:8px;z-index:3;pointer-events:none}
+.big{font-size:min(30vw,130px);font-weight:800;line-height:1;text-shadow:0 2px 8px #000;font-variant-numeric:tabular-nums;letter-spacing:-2px}
+.chip{display:inline-block;margin-top:4px;background:#000a;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.msg{position:absolute;left:0;right:0;bottom:0;z-index:3;background:#000b;padding:6px 10px;font-size:13px}
+.row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+button{flex:1;min-width:110px;background:#262d36;color:var(--txt);border:0;border-radius:10px;padding:13px 8px;font-size:14px;font-weight:600;font-family:inherit}
+button:active{transform:scale(.97)}
+button.p{background:var(--acc);color:var(--ink)}
+button.sec{background:#262d36;color:var(--txt)}
+button:disabled{opacity:.35}
+.card{background:var(--card);border-radius:14px;padding:14px;margin:10px 0}
+.card label{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)}
+.card label b{color:var(--acc)}
+.card input[type=range]{width:100%;accent-color:var(--acc)}
+.card input[type=checkbox]{accent-color:var(--acc);width:20px;height:20px}
+select{max-width:62%;min-width:0;background:#151a20;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px;font-size:15px;font-family:inherit}
+canvas#gr{width:100%;height:110px;background:#151a20;border-radius:10px;display:block}
+ul{list-style:none;margin:0;padding:0;max-height:200px;overflow:auto;font-size:13px}
+li{padding:5px 0;border-bottom:1px solid var(--line)}
+li.no{color:var(--warn)}
+b.h{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+small{color:var(--mut)}
+</style>
+</head>
+<body class="m-test">
+<h1><svg viewBox="-60 -60 120 120" width="26" height="26" aria-hidden="true" style="vertical-align:-5px;margin-right:6px"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><path d="M-44 -28V-44H-28M28 -44H44V-28M44 28V44H28M-28 44H-44V28" fill="none" stroke="#14171c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(0 2) scale(.8)"><path d="M-17 -14V-28Q-17 -42 -4 -42H4Q17 -42 17 -28V-14" fill="none" stroke="#14171c" stroke-width="10" stroke-linejoin="round"/><circle cx="0" cy="14" r="32" fill="#14171c"/><g transform="translate(0 14) scale(.52)" fill="#ff8c00"><path transform="translate(-14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.1 1.15)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g></svg>MET<b>Grind</b> <small id="ver">v0.5.0</small> <span class="beta">beta</span></h1>
+<div class="sub metonly">Do metcons made in REPGrind: the phone camera counts the reps and times the metcon. Everything runs on this phone; no video is sent anywhere.</div>
+<div class="sub testonly">Practice the movements: pick a movement, film yourself and watch the counting. The sliders set what counts as a rep; METGrind uses the same values on this phone. Everything runs on this phone; no video is sent anywhere.</div>
+<a class="nav testonly" href="./">← METGrind</a>
+<div class="card metonly" id="mcCard" style="margin-top:0">
+  <b class="h">Metcon</b>
+  <div id="mcEmpty" class="mcs">Make a metcon in REPGrind (chipper or rep scheme) and tap <b>Open in METGrind</b>, or paste its link or code here.</div>
+  <div id="mcInfo" style="display:none"><div class="mct" id="mcTitle"></div><ol id="mcList"></ol></div>
+  <div class="row"><input id="mcCode" placeholder="Paste metcon link or code" autocomplete="off"><button id="mcLoad" class="sec" style="flex:0 0 80px;min-width:0">Load</button></div>
+  <div class="row"><button id="mcStart" class="p" disabled>Start metcon</button><button id="mcQuit" class="sec" style="display:none">Quit</button></div>
+  <small id="mcMsg"></small>
+</div>
+
+<div class="card metonly" id="wcCard">
+  <b class="h">WOD Code · camera here, results on another phone</b>
+  <div id="wcOff"><div class="mcs">Join the coach's WOD Code (made in REPGrind, WOD Code tab). Every rep the camera counts goes to the coach's phone like a tap on a rep button. The coach's workout loads here and starts with the coach.</div>
+  <div class="row"><input id="wcCode" class="wci" maxlength="4" placeholder="Code" autocomplete="off" style="flex:0 0 90px;text-transform:uppercase;letter-spacing:3px;font-weight:700"><input id="wcName" class="wci" maxlength="19" placeholder="Your name" autocomplete="off"><button id="wcJoin" class="p" style="flex:0 0 90px;min-width:0">Join</button></div></div>
+  <div id="wcOn" style="display:none"><div class="mct" id="wcStatus"></div><div id="wcBoard" class="mcs"></div>
+  <div class="mcs">Start the camera first: the metcon starts by itself when the coach starts.</div>
+  <label style="margin:6px 0">Start when the coach starts <input type="checkbox" id="wcFollow" checked></label>
+  <div class="row"><button id="wcLoad" class="sec">Load the coach's workout</button><button id="wcLeave" class="sec">Leave</button></div></div>
+  <small id="wcMsg"></small>
+</div>
+<div class="card testonly" id="movCard">
+  <label>Movement test
+    <select id="mov"><option value="squat">Air squat</option><option value="burpee">Burpee (no jump)</option><option value="burpeej">Burpee with jump</option><option value="wb">Wall ball</option><option value="lunge">Lunge</option><option value="kbr">Kettlebell swing (Russian, eye level)</option><option value="kba">Kettlebell swing (American, overhead)</option></select>
+  </label>
+  <small id="movHelp"></small>
+</div>
+
+<div class="stage" id="stage">
+  <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="mcChip" style="display:none;background:var(--acc);color:var(--ink)"></span> <span class="chip" id="angTxt">--</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">--</span> <span class="chip" id="leanTxt">--</span> <span class="chip" id="hndTxt">hands --</span></div>
+  <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
+</div>
+
+<div class="row">
+  <button id="bStart" class="p">Start camera</button>
+  <button id="bFlip" class="sec" disabled>Flip camera</button>
+  <button id="bReset" class="sec testonly">Reset</button>
+</div>
+<div class="card" id="camCard" style="display:none">
+  <label>Camera <select id="camSel"></select></label>
+  <label style="margin-top:8px">Zoom <b id="zv">1.0×</b></label>
+  <div style="display:flex;gap:8px;align-items:center"><button class="sec" id="zOut" style="flex:0 0 52px;min-width:0">−</button><input type="range" id="zoom" style="flex:1" disabled><button class="sec" id="zIn" style="flex:0 0 52px;min-width:0">+</button></div>
+  <small id="zHelp"></small>
+</div>
+<div class="row testonly">
+  <button id="bGo" class="sec">Start set</button>
+  <button id="bEnd" class="sec">Stop set</button>
+</div>
+<div class="row testonly">
+  <button id="bSim" class="sec">Simulate (no camera)</button>
+</div>
+
+<div class="card">
+  <label>Voice for "no rep" and its cause
+    <select id="voice"><option value="">off</option><option value="en" selected>English</option><option value="fi">Suomi</option></select>
+  </label>
+  <div class="testonly"><label style="margin-top:8px">Hand gestures: both thumbs up = start, both open palms = stop
+    <input type="checkbox" id="gest" checked>
+  </label>
+  <small>With gestures on, reps only count after a start. Gestures are read only while you stand, held for about a second, and the hands must be clearly visible to the camera. Arms out front during a squat can look like open palms, so the stop gesture is ignored mid-rep.</small></div>
+</div>
+
+<div class="card testonly" id="buCard" style="display:none">
+  <label>Floor: torso at least <b id="fv">60°</b> from vertical (lying or plank)</label>
+  <input type="range" id="floor" min="40" max="85" value="60">
+  <div id="jmpBox">
+    <label style="margin-top:8px">Jump: feet must rise at least <b id="jv">4%</b> of body height</label>
+    <input type="range" id="jump" min="2" max="15" value="4">
+    <label style="margin-top:8px">Hands above head at the top <input type="checkbox" id="hands" checked></label>
+  </div>
+  <small>A burpee counts when you go down until the torso is near horizontal, come back to standing (and with the jump variant, jump) . Film from the side with the phone fixed and level. The jump is measured against your standing foot height, so don't move the phone mid-set.</small>
+</div>
+
+<div class="card testonly" id="lgCard" style="display:none">
+  <label>Front knee bends below <b id="ldv">100°</b></label>
+  <input type="range" id="ldown" min="60" max="135" value="100">
+  <label>and back above <b id="luv">160°</b> to finish</label>
+  <input type="range" id="lup" min="130" max="178" value="160">
+  <label style="margin-top:8px">Back knee lower than front knee by <b id="lbv">12 cm</b></label>
+  <input type="range" id="lback" min="0" max="35" value="12">
+  <label>Torso leans at most <b id="llv">30°</b> from vertical</label>
+  <input type="range" id="llean" min="10" max="60" value="30">
+  <small>Each lunge (either leg, forward, reverse or walking) is one rep. It needs a front knee bend, the back knee dropped below the front one (this tells it from a squat), and an upright torso. Film from the side.</small>
+</div>
+
+<div class="card testonly" id="kbCard" style="display:none">
+  <label>Hips open at the top: hip angle at least <b id="khv">160°</b></label>
+  <input type="range" id="khip" min="130" max="178" value="160">
+  <small id="kbHelp"></small>
+</div>
+
+<div class="card testonly" id="sqCard">
+  <label>Counts as a rep when knee angle goes below <b id="dv">110°</b></label>
+  <input type="range" id="down" min="60" max="140" value="110">
+  <label>and then back above <b id="uv">160°</b></label>
+  <input type="range" id="up" min="130" max="178" value="160">
+  <label style="margin-top:8px">Hips must be below knees by <b id="hv">0 cm</b></label>
+  <input type="range" id="hip" min="-10" max="15" value="0">
+  <label>Chest upright: torso leans at most <b id="lv">45°</b> from vertical</label>
+  <input type="range" id="lean" min="15" max="80" value="45">
+  <div id="wbBox" style="display:none">
+    <label style="margin-top:8px">Wall ball: hands must reach <b id="wv">110%</b> (shoulder 0, top of head 100)</label>
+    <input type="range" id="wbt" min="60" max="250" value="110">
+  </div>
+  <small>A rep needs all three at the bottom: knee angle low enough, hips below the knees, torso upright. 180° knee = straight leg. Camera tilt affects the hip and lean numbers, so keep the phone level.</small>
+</div>
+
+<div class="card testonly">
+  <label>Pose model
+    <select id="mdl"><option value="lite">lite (fast)</option><option value="full">full</option><option value="heavy">heavy (slow)</option></select>
+  </label>
+</div>
+
+<div class="card testonly"><canvas id="gr" width="600" height="220"></canvas><small id="grCap"></small></div>
+
+<div class="card testonly"><b class="h">Reps</b><ul id="log"></ul><small id="fps"></small></div>
+<div id="mgView" class="metonly" style="display:none">
+<div class="card" id="mcRes"><b class="h">Result</b><div class="mct" id="mcTime"></div><div class="row"><button id="mcCopy" class="sec">Copy result</button><button id="mcAgain" class="p">Do it again</button></div></div>
+<div class="card"><h2>Rep chart</h2><div id="mgRace"></div><div class="note" id="mgRaceNote" style="margin-top:4px"></div></div>
+<div class="card"><h2>Time per rep</h2><canvas id="c1"></canvas><div class="leg"><span><span class="sw" style="background:var(--acc)"></span>rep</span><span><span class="sw" style="background:#4a5563"></span>change of movement</span><span><span class="sw" style="background:var(--acc2)"></span>average</span></div></div>
+<div class="card"><h2>Reps per minute</h2><canvas id="c2"></canvas></div>
+<div class="card"><h2>Analysis</h2><div class="grid2" id="an"></div><div class="note" id="anNote" style="margin-top:8px"></div></div>
+<div class="card"><h2>Sets</h2><table><thead><tr><th>#</th><th>Movement</th><th>Reps</th><th>Time</th><th>Avg rep</th><th>Change</th></tr></thead><tbody id="sets"></tbody></table></div>
+</div>
+<div class="card metonly" id="mgHist" style="display:none"><h2>Previous metcons</h2><div id="mgHistList"></div></div>
+
+<a class="nav metonly" href="practice.html">Practice movements →</a>
+<script type="module">
+const $=id=>document.getElementById(id);
+const V='0.10.14';
+const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V;
+const MODEL=k=>'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_'+k+'/float16/1/pose_landmarker_'+k+'.task';
+
+let DOWN=110, UP=160, HIPM=0, LEAN=45, FLOORL=60, JUMPP=4, MOVE='squat';
+let WBT=110, peakHand=-999, tThrow=0, wbTxt='';
+let lstate='stand', lMin=180, lDiff=0, lLean=null, lT=0, DOWNL=100, UPL=160, BACKD=12, LEANL=30, HIPO=160;
+let kstate='low', kPeak=-999, kHip=null, kT=0;
+let bstate='stand', maxLean=0, base=null, bodyH=null, peak=0, handsOk=false, tTop=0, tDown=0;
+let reps=0, state='up', reached=false, minAng=180, bestHip=-99, leanAtBottom=null, kneeOk=false, hipOk=false, sm=null, tStart=0, hist=[];
+let active=false, gr=null, hold={kind:null,t0:0}, lastSwitch=-1e9, lastG=0, gmod=null;
+let lm=null, lmKey=null, stream=null, facing='user', running=false, audio=null, simTimer=null;
+let lastVT=-1, frames=0, fpsT=performance.now(), usedSide='';
+
+function say(t){
+  const L=$('voice').value;if(!L)return;
+  try{const sy=window.speechSynthesis;sy.resume();if(sy.speaking||sy.pending)sy.cancel();
+    const u=new SpeechSynthesisUtterance(t);u.lang=L==='fi'?'fi-FI':'en-US';u.rate=1.05;
+    setTimeout(()=>sy.speak(u),60)}catch(e){}
+}
+const SAY={
+  en:{no:'No rep',knee:'not deep enough',hip:'hips too high',lean:'leaning too far forward',floor:'not down to the floor',back:'back knee not low enough',height:'not high enough',hips:'hips not open',jump:'no jump',hands:'hands not overhead',and:' and ',go:'Go',stop:n=>'Stop. '+n+(n==1?' rep':' reps')},
+  fi:{no:'Ei toistoa',knee:'ei tarpeeksi syvä',hip:'lonkat liian ylhäällä',lean:'liikaa eteenpäin kallistunut',floor:'ei maahan asti',back:'takapolvi ei tarpeeksi alhaalla',height:'ei tarpeeksi korkealle',hips:'lonkat eivät auki',jump:'ei hyppyä',hands:'kädet eivät ylhäällä',and:' ja ',go:'Aloita',stop:n=>'Lopeta. '+n+(n==1?' toisto':' toistoa')}
+};
+const counting=()=>active||!$('gest').checked;
+function setActive(a){
+  active=a;$('actTxt').textContent=a?'SET RUNNING':'set not started';
+}
+function startSet(){reset();setActive(true);beep();say(SAY[$('voice').value||'en'].go)}
+function stopSet(){const n=reps;setActive(false);beep();say(SAY[$('voice').value||'en'].stop(n))}
+function sayNo(keys){const T=SAY[$('voice').value||'en'];say(T.no+', '+keys.map(k=>T[k]).join(T.and))}
+function goodRep(txt){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · '+txt);if(window.MG_NET&&MG_NET.status)MG_NET.rep();if(MC&&MC.state==='run'){MC.reps.push(performance.now()-MC.t0);setTimeout(mcRep,40)}}
+const isSq=()=>MOVE==='squat'||MOVE==='wb';
+const standingNow=()=>isSq()?state==='up':MOVE==='lunge'?lstate==='stand':(MOVE==='kbr'||MOVE==='kba')?kstate==='low':bstate==='stand';
+function msg(t){$('msg').textContent=t}
+function beep(){try{if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.09)}catch(e){}}
+function logRep(txt,no){const li=document.createElement('li');if(no)li.className='no';li.textContent=txt;$('log').prepend(li)}
+
+// angle at b between a-b and c-b, in 3D
+function angle3(a,b,c){
+  const v1=[a.x-b.x,a.y-b.y,a.z-b.z],v2=[c.x-b.x,c.y-b.y,c.z-b.z];
+  const n=Math.hypot(...v1)*Math.hypot(...v2);if(!n)return null;
+  const d=v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
+  return Math.acos(Math.max(-1,Math.min(1,d/n)))*180/Math.PI;
+}
+
+// the counter: up -> going down -> back up = 1 rep, only if the bottom met all three rules
+// m = {knee: degrees, hip: cm hips are below knees, lean: degrees torso from vertical or null}
+function feedSquat(m,t){
+  const a=m.knee;
+  sm=sm==null?a:sm+0.5*(a-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='knee '+Math.round(sm)+'°';
+  $('hipTxt').textContent='hips '+(m.hip>=0?'+':'')+m.hip.toFixed(0)+' cm vs knees';
+  $('leanTxt').textContent='lean '+(m.lean==null?'--':Math.round(m.lean))+'°'+(MOVE==='wb'?' · hands '+(m.hand==null?'--':Math.round(m.hand))+'%':'');
+  if(!counting()){state='up';$('stTxt').textContent='standing';drawGraph();return}
+  if(state==='throw'){
+    if(sm>=UP&&m.hand!=null)peakHand=Math.max(peakHand,m.hand);
+    if(peakHand>=WBT){goodRep(wbTxt+' · hands '+Math.round(peakHand)+'%');state='up'}
+    else if(sm<UP||t-tThrow>800){logRep('No rep: hands only up to '+Math.round(peakHand)+'% (need '+WBT+'%)',true);sayNo(['height']);state='up'}
+    else{$('stTxt').textContent='throw!';drawGraph();return}
+  }
+  if(state==='up'){
+    if(sm<UP){state='down';minAng=sm;bestHip=m.hip;leanAtBottom=m.lean;kneeOk=false;hipOk=false;tStart=t;peakHand=-999}
+  }else{
+    minAng=Math.min(minAng,sm);
+    if(sm<=DOWN)kneeOk=true;
+    if(m.hip>=HIPM)hipOk=true;
+    if(m.hip>bestHip){bestHip=m.hip;leanAtBottom=m.lean}
+    if(kneeOk&&hipOk&&m.hand!=null)peakHand=Math.max(peakHand,m.hand);
+    if(sm>=UP){
+      const dur=(t-tStart)/1000;
+      const leanOk=leanAtBottom==null||leanAtBottom<=LEAN;
+      const sqOk=kneeOk&&hipOk&&leanOk&&dur>0.4,wbMiss=MOVE==='wb'&&sqOk&&peakHand<WBT;
+      const base0='knee '+Math.round(minAng)+'° · hips '+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm · '+dur.toFixed(1)+' s';
+      if(wbMiss){state='throw';tThrow=t;wbTxt=base0}
+      else if(sqOk){goodRep((MOVE==='wb'?'hands '+Math.round(peakHand)+'% · ':'')+'knee '+Math.round(minAng)+'° · hips '+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm · lean '+(leanAtBottom==null?'--':Math.round(leanAtBottom))+'° · '+dur.toFixed(1)+' s')}
+      else if(minAng<UP-12&&dur>0.3){
+        const why=[];
+        if(!kneeOk)why.push('knee only '+Math.round(minAng)+'° (need '+DOWN+'°)');
+        if(!hipOk)why.push('hips not below knees ('+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm, need '+HIPM+')');
+        if(!leanOk)why.push('leaning '+Math.round(leanAtBottom)+'° (max '+LEAN+'°)');
+        if(why.length){logRep('No rep: '+why.join('; '),true);
+          const c=[];if(!kneeOk)c.push('knee');if(!hipOk)c.push('hip');if(!leanOk)c.push('lean');
+          sayNo(c)}
+      }
+      if(state==='down')state='up';
+    }
+  }
+  $('stTxt').textContent=state==='throw'?'throw!':state==='up'?'standing':(kneeOk&&hipOk?'deep enough, stand up':'going down');
+  drawGraph();
+}
+
+// burpee: standing -> down until the torso is near horizontal -> back to standing (-> jump, hands up)
+// m = {lean: torso degrees from vertical, knee: degrees or null, ankleY, noseY, wristY: image y (0 = top) or null}
+function feedBurpee(m,t){
+  const a=m.lean;
+  sm=sm==null?a:sm+0.5*(a-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='torso '+Math.round(sm)+'°';
+  $('hipTxt').textContent='knee '+(m.knee==null?'--':Math.round(m.knee))+'°';
+  const jumpNow=base!=null&&bodyH?Math.max(0,(base-m.ankleY)/bodyH*100):0;
+  $('leanTxt').textContent='feet up '+jumpNow.toFixed(1)+'%';
+  if(!counting()){bstate='stand';$('stTxt').textContent='standing';drawGraph();return}
+  const upright=sm<=25&&(m.knee==null||m.knee>=150);
+  const jv=MOVE==='burpeej';
+  if(bstate==='stand'){
+    if(upright){base=base==null?m.ankleY:base+0.05*(m.ankleY-base);const h=m.ankleY-m.noseY;if(h>0.2)bodyH=bodyH==null?h:bodyH+0.05*(h-bodyH)}
+    if(sm>=40){bstate='down';maxLean=sm;tDown=t}
+  }else if(bstate==='down'){
+    maxLean=Math.max(maxLean,sm);
+    if(sm<=30){
+      const dur=(t-tDown)/1000;
+      if(dur<0.5){bstate='stand'}
+      else if(maxLean<FLOORL){logRep('No rep: not down to the floor (torso only '+Math.round(maxLean)+'°, need '+FLOORL+'°)',true);sayNo(['floor']);bstate='stand'}
+      else bstate='rise';
+    }
+  }else if(bstate==='rise'){
+    if(sm>=40){bstate='down'}
+    else if(upright){
+      if(jv){bstate='jump';tTop=t;peak=0;handsOk=false}
+      else{goodRep('floor '+Math.round(maxLean)+'° · '+((t-tDown)/1000).toFixed(1)+' s');bstate='stand'}
+    }
+  }else if(bstate==='jump'){
+    peak=Math.max(peak,bodyH?(base-m.ankleY)/bodyH*100:0);
+    if(m.wristY!=null&&m.wristY<m.noseY)handsOk=true;
+    const needH=$('hands').checked;
+    if(peak>=JUMPP&&(handsOk||!needH)){goodRep('floor '+Math.round(maxLean)+'° · jump '+peak.toFixed(1)+'% · '+((t-tDown)/1000).toFixed(1)+' s');bstate='stand'}
+    else if(t-tTop>1500){
+      const c=[],w=[];
+      if(peak<JUMPP){c.push('jump');w.push('no jump (feet up '+peak.toFixed(1)+'%, need '+JUMPP+'%)')}
+      if(needH&&!handsOk){c.push('hands');w.push('hands not above head')}
+      logRep('No rep: '+w.join('; '),true);sayNo(c);bstate='stand';
+    }
+  }
+  $('stTxt').textContent={stand:'standing',down:'going down',rise:'coming up',jump:'jump!'}[bstate];
+  drawGraph();
+}
+
+// lunge: standing -> front knee bends, back knee drops -> standing = 1 rep
+// m = {kl, kr: knee angles, diff: cm one knee is lower than the other, lean}
+function feedLunge(m,t){
+  const f=Math.min(m.kl,m.kr);
+  sm=sm==null?f:sm+0.5*(f-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='front knee '+Math.round(sm)+'°';
+  $('hipTxt').textContent='back knee '+m.diff.toFixed(0)+' cm lower';
+  $('leanTxt').textContent='lean '+(m.lean==null?'--':Math.round(m.lean))+'°';
+  if(!counting()){lstate='stand';$('stTxt').textContent='standing';drawGraph();return}
+  if(lstate==='stand'){
+    if(sm<UPL){lstate='down';lMin=sm;lDiff=m.diff;lLean=null;lT=t}
+  }else{
+    lMin=Math.min(lMin,sm);lDiff=Math.max(lDiff,m.diff);
+    if(sm<=DOWNL&&m.lean!=null)lLean=lLean==null?m.lean:Math.max(lLean,m.lean);
+    if(sm>=UPL){
+      const dur=(t-lT)/1000;
+      const kOk=lMin<=DOWNL,bOk=lDiff>=BACKD,nOk=lLean==null||lLean<=LEANL;
+      if(kOk&&bOk&&nOk&&dur>0.4)goodRep('front knee '+Math.round(lMin)+'° · back knee '+lDiff.toFixed(0)+' cm lower · lean '+(lLean==null?'--':Math.round(lLean))+'° · '+dur.toFixed(1)+' s');
+      else if(lMin<UPL-12&&dur>0.3){
+        const c=[],w=[];
+        if(!kOk){c.push('knee');w.push('front knee only '+Math.round(lMin)+'° (need '+DOWNL+'°)')}
+        if(!bOk){c.push('back');w.push('back knee only '+lDiff.toFixed(0)+' cm lower (need '+BACKD+')')}
+        if(!nOk){c.push('lean');w.push('leaning '+Math.round(lLean)+'° (max '+LEANL+'°)')}
+        if(c.length){logRep('No rep: '+w.join('; '),true);sayNo(c)}
+      }
+      lstate='stand';
+    }
+  }
+  $('stTxt').textContent=lstate==='stand'?'standing':(sm<=DOWNL?'deep enough, stand up':'going down');
+  drawGraph();
+}
+
+// kettlebell swing: hands swing from low up to a target height (eye level or above the head), hips open at the top
+// m = {wristY, shoulderY, noseY, eyeY: image y (0 = top), hip: hip angle in degrees or null}
+function feedSwing(m,t){
+  const headTop=m.noseY-0.75*(m.shoulderY-m.noseY),span=m.shoulderY-headTop;
+  const idx=(m.shoulderY-m.wristY)/span*100;          // 0 = shoulder height, 100 = top of head
+  const tgt=MOVE==='kba'?100:(m.shoulderY-m.eyeY)/span*100; // eye level, or the top of the head
+  sm=sm==null?idx:sm+0.6*(idx-sm);
+  hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
+  $('angTxt').textContent='hands '+Math.round(sm)+'%';
+  $('hipTxt').textContent='hip '+(m.hip==null?'--':Math.round(m.hip))+'°';
+  $('leanTxt').textContent='target '+Math.round(tgt)+'%';
+  window.__tgt=tgt;
+  if(!counting()){kstate='low';$('stTxt').textContent='low';drawGraph();return}
+  if(kstate==='low'){
+    if(sm>10){kstate='swing';kPeak=sm;kHip=m.hip;kT=t}
+  }else{
+    if(sm>kPeak){kPeak=sm;kHip=m.hip}
+    if(sm<0){
+      const dur=(t-kT)/1000;
+      if(dur>0.25){
+        const hOk=kPeak>=tgt,pOk=kHip==null||kHip>=HIPO;
+        if(hOk&&pOk)goodRep('hands up to '+Math.round(kPeak)+'% (target '+Math.round(tgt)+'%) · hip '+(kHip==null?'--':Math.round(kHip))+'° · '+dur.toFixed(1)+' s');
+        else{const c=[],w=[];
+          if(!hOk){c.push('height');w.push('hands only up to '+Math.round(kPeak)+'% (need '+Math.round(tgt)+'%)')}
+          if(!pOk){c.push('hips');w.push('hips only '+Math.round(kHip)+'° (need '+HIPO+'°)')}
+          logRep('No rep: '+w.join('; '),true);sayNo(c)}
+      }
+      kstate='low';
+    }
+  }
+  $('stTxt').textContent=kstate==='low'?'low':(sm>=tgt?'at the top':'swinging');
+  drawGraph();
+}
+function feed(m,t){isSq()?feedSquat(m,t):MOVE==='lunge'?feedLunge(m,t):(MOVE==='kbr'||MOVE==='kba')?feedSwing(m,t):feedBurpee(m,t)}
+
+function drawGraph(){
+  const c=$('gr'),x=c.getContext('2d'),W=c.width,H=c.height;
+  x.clearRect(0,0,W,H);
+  const kb=MOVE==='kbr'||MOVE==='kba',kn=isSq()||MOVE==='lunge';
+  const lo0=kn?40:kb?-60:0,hi0=kn?190:kb?160:100;
+  const y=a=>H-((a-lo0)/(hi0-lo0))*H;
+  x.lineWidth=2;
+  const l1=isSq()?DOWN:MOVE==='lunge'?DOWNL:kb?(window.__tgt!=null&&MOVE==='kbr'?window.__tgt:100):FLOORL;
+  const l2=isSq()?UP:MOVE==='lunge'?UPL:kb?0:25;
+  x.strokeStyle='#ff8c00';x.beginPath();x.moveTo(0,y(l1));x.lineTo(W,y(l1));x.stroke();
+  x.strokeStyle='#3ccf7a';x.beginPath();x.moveTo(0,y(l2));x.lineTo(W,y(l2));x.stroke();
+  if(hist.length<2)return;
+  const t1=hist[hist.length-1].t;
+  x.strokeStyle='#3fb6ff';x.lineWidth=3;x.beginPath();
+  hist.forEach((p,i)=>{const px=W-((t1-p.t)/8000)*W;i?x.lineTo(px,y(p.a)):x.moveTo(px,y(p.a))});
+  x.stroke();
+}
+
+function reset(){reps=0;state='up';bstate='stand';lstate='stand';kstate='low';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='--';$('stTxt').textContent='ready';$('hipTxt').textContent='--';$('leanTxt').textContent='--';drawGraph()}
+function setMove(m){
+  MOVE=m;const sq=m==='squat'||m==='wb',bu=m==='burpee'||m==='burpeej',lg=m==='lunge',kb=m==='kbr'||m==='kba';
+  $('sqCard').style.display=sq?'':'none';$('buCard').style.display=bu?'':'none';$('lgCard').style.display=lg?'':'none';$('kbCard').style.display=kb?'':'none';$('wbBox').style.display=m==='wb'?'':'none';$('jmpBox').style.display=m==='burpeej'?'':'none';
+  $('kbHelp').textContent=m==='kbr'?'Russian swing: a rep counts when the hands rise above eye level and the hips are open at the top. Film from the side.':'American swing: a rep counts when the hands go overhead (above the top of the head) and the hips are open at the top. Film from the side.';
+  $('movHelp').textContent=lg?'Side view. Front knee bends, back knee drops, torso upright, then stand.':kb?(m==='kbr'?'Side view. Hands above eye level at the top.':'Side view. Hands above the head at the top.'):m==='wb'?'Side view, facing the wall. Squat to depth like an air squat, then throw: hands must reach the hand line at the top. The ball and the wall target are not seen by the camera.':sq?'Side or front view. A rep needs knee angle, hips below knees and an upright torso.':(m==='burpee'?'Side view. Down to the floor, then stand up. Counts when you are fully upright.':'Side view. Down to the floor, stand up and jump (hands above head). Counts at the jump.');
+  $('grCap').textContent=sq?'Knee angle, last 8 s. Red = bottom threshold, green = top.':lg?'Front knee angle, last 8 s. Red = bend threshold, green = standing.':kb?'Hand height, last 8 s (0 = shoulder, 100 = top of head). Red = target height, green = shoulder line.':'Torso angle from vertical, last 8 s. Red = floor line, green = upright line.';
+  reset();
+}
+
+// ---- simulation (checks the counting logic without a camera) ----
+function simulate(){
+  if(simTimer){clearInterval(simTimer);simTimer=null}
+  reset();setActive(true);
+  if(MOVE==='lunge')return simulateLunge();
+  if(MOVE==='wb')return simulateWB();
+  if(MOVE==='kbr'||MOVE==='kba')return simulateSwing();
+  if(MOVE!=='squat')return simulateBurpee();
+  // knee, hips below knees (cm), torso lean. Expected: reps 1,2,5 count; 3 (hips high), 4 (leaning), 6 (shallow) do not.
+  const cases=[[80,4,25],[85,2,30],[82,-5,20],[80,5,65],[78,6,35],[135,-12,20]];
+  let f=0;const fps=30,per=2.4,stand=0.6;
+  const total=cases.length*(per+stand)*fps;
+  msg('Simulating 6 squats: 3 should count, 3 should not (hips high, leaning, shallow).');
+  simTimer=setInterval(()=>{
+    const t=f/fps,i=Math.floor(t/(per+stand));
+    if(f>=total||i>=cases.length){clearInterval(simTimer);simTimer=null;msg('Simulation done: expected 3 reps and 3 "No rep".');return}
+    const p=t-i*(per+stand),[kn,hp,ln]=cases[i];
+    let k=0;if(p<per)k=0.5-0.5*Math.cos(2*Math.PI*p/per);
+    feed({knee:170-(170-kn)*k+(Math.random()-.5)*3,hip:-25+(hp+25)*k,lean:10+(ln-10)*k},t*1000);f++;
+  },1000/fps);
+}
+
+function simulateLunge(){
+  // [front knee at bottom, back knee drop cm, lean]. Reps 1,2,5 count; 3 shallow, 4 squat-like (no knee drop), 6 leaning.
+  const cases=[[90,20,10],[95,18,15],[112,20,10],[90,2,10],[88,25,12],[90,22,50]];
+  runSim(cases.length,3.2,'Simulating 6 lunges: 3 should count (shallow, squat-like and leaning ones should not).',(p,per,c)=>{
+    const [fk,df,ln]=c,k=p<2.4?0.5-0.5*Math.cos(2*Math.PI*p/2.4):0;
+    const front=170-(170-fk)*k;
+    return {kl:front+(Math.random()-.5)*3,kr:170-(170-(fk+14))*k,diff:df*k,lean:8+(ln-8)*k};
+  },cases);
+}
+function simulateSwing(){
+  const am=MOVE==='kba';
+  // [peak hand height image y, hip angle at top]. shoulder 0.35, nose 0.2, eyes 0.19, top of head about 0.09
+  const cases=am?[[0.05,175],[0.04,172],[0.15,175],[0.05,140],[0.06,176]]:[[0.15,175],[0.12,172],[0.30,175],[0.15,140],[0.10,176]];
+  runSim(cases.length,2.4,am?'Simulating 5 American swings: 3 should count (one stops at eye level, one has closed hips).':'Simulating 5 Russian swings: 3 should count (one too low, one with closed hips).',(p,per,c)=>{
+    const [py,hp]=c,k=Math.sin(Math.PI*p/per)**2;
+    return {wristY:0.65-(0.65-py)*k+(Math.random()-.5)*0.004,shoulderY:0.35,noseY:0.2,eyeY:0.19,hip:110+(hp-110)*k};
+  },cases);
+}
+function runSim(n,per,text,gen,cases){
+  let f=0;const fps=30,total=n*per*fps;msg(text);
+  simTimer=setInterval(()=>{
+    const t=f/fps,i=Math.floor(t/per);
+    if(f>=total||i>=n){clearInterval(simTimer);simTimer=null;msg('Simulation done.');return}
+    feed(gen(t-i*per,per,cases[i]),t*1000);f++;
+  },1000/fps);
+}
+
+function simulateWB(){
+  // [knee, hips cm, lean, peak hands %]. Reps 1,2,5 count; 3 hands too low, 4 hips high.
+  const cases=[[80,4,25,130],[85,2,30,125],[82,4,20,60],[80,-5,20,130],[78,6,35,140]];
+  runSim(cases.length,3,'Simulating 5 wall balls: 3 should count (one throw too low, one squat too high).',(p,per,c)=>{
+    const [kn,hp,ln,pk]=c,pp=Math.min(1,p/2.4),k=p<2.4?0.5-0.5*Math.cos(2*Math.PI*pp):0;
+    const sst=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)};
+    const hand=p<1.2?80+(-10-80)*sst(p/1.2):-10+(pk+10)*sst((p-1.2)/0.9);
+    return {knee:170-(170-kn)*k+(Math.random()-.5)*3,hip:-25+(hp+25)*k,lean:10+(ln-10)*k,hand};
+  },cases);
+}
+
+function simulateBurpee(){
+  const jv=MOVE==='burpeej';
+  // [max torso lean, jump height in % of body, hands up]. No-jump: reps 1,2,4 count, 3 (not down) does not.
+  // With jump: reps 1,2,5 count; 3 (no jump) and 4 (hands down) do not.
+  const cases=jv?[[85,8,true],[88,7,true],[85,0,true],[85,8,false],[84,9,true]]:[[85,0,true],[88,0,true],[48,0,true],[86,0,true]];
+  let f=0;const fps=30,per=5;
+  const total=cases.length*per*fps;
+  msg('Simulating '+cases.length+' burpees: '+(jv?'3 should count, 1 has no jump, 1 has hands down.':'3 should count, 1 is not down to the floor.'));
+  simTimer=setInterval(()=>{
+    const t=f/fps,i=Math.floor(t/per);
+    if(f>=total||i>=cases.length){clearInterval(simTimer);simTimer=null;msg('Simulation done.');return}
+    const p=t-i*per,[ml,jh,hu]=cases[i];
+    const r=(a,b,u,v)=>a+(b-a)*Math.max(0,Math.min(1,(p-u)/(v-u)));
+    let lean=5,knee=175,ay=0.9;
+    if(p>=0.8&&p<1.6){lean=r(5,ml,0.8,1.6);knee=r(175,90,0.8,1.6)}
+    else if(p>=1.6&&p<2.6){lean=ml;knee=r(90,170,1.6,1.8)}
+    else if(p>=2.6&&p<3.4){lean=r(ml,5,2.6,3.4);knee=r(170,175,2.6,3.4)}
+    if(p>=3.4&&p<3.9)ay=0.9-(jh/100*0.7)*Math.sin(Math.PI*(p-3.4)/0.5);
+    const wy=(p>=3.4&&p<3.9&&hu)?0.1:0.55;
+    feed({lean:lean+(Math.random()-.5)*2,knee,ankleY:ay+(Math.random()-.5)*0.004,noseY:0.2,wristY:wy},t*1000);f++;
+  },1000/fps);
+}
+
+// ---- camera + model ----
+async function loadModel(){
+  const key=$('mdl').value;
+  if(lm&&lmKey===key)return;
+  msg('Loading the pose model (a few MB, first time only)...');
+  const mod=await import(CDN+'/+esm');
+  const fs=await mod.FilesetResolver.forVisionTasks(CDN+'/wasm');
+  const opts=d=>({baseOptions:{modelAssetPath:MODEL(key),delegate:d},runningMode:'VIDEO',numPoses:1});
+  try{lm=await mod.PoseLandmarker.createFromOptions(fs,opts('GPU'))}
+  catch(e){lm=await mod.PoseLandmarker.createFromOptions(fs,opts('CPU'))}
+  lmKey=key;
+  gmod=mod;
+  if($('gest').checked&&!gr){
+    msg('Loading the hand gesture model...');
+    const go=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',delegate:d},runningMode:'VIDEO',numHands:2});
+    try{gr=await mod.GestureRecognizer.createFromOptions(fs,go('GPU'))}
+    catch(e){try{gr=await mod.GestureRecognizer.createFromOptions(fs,go('CPU'))}catch(e2){gr=null;$('gest').checked=false;msg('Gesture model failed to load; gestures turned off.')}}
+  }
+}
+let camId='';
+async function setupZoom(){
+  const tr=stream.getVideoTracks()[0],caps=(tr.getCapabilities&&tr.getCapabilities())||{},z=$('zoom');
+  $('camCard').style.display='';
+  if(caps.zoom&&caps.zoom.max>caps.zoom.min){
+    z.min=caps.zoom.min;z.max=caps.zoom.max;z.step=caps.zoom.step||0.1;z.disabled=false;
+    z.value=(tr.getSettings().zoom)||caps.zoom.min;$('zv').textContent=(+z.value).toFixed(1)+'×';
+    $('zHelp').textContent='Camera zoom range '+caps.zoom.min.toFixed(1)+'× to '+caps.zoom.max.toFixed(1)+'×. '+(caps.zoom.min<1?'Below 1× is the wide lens.':'This camera cannot zoom out past its widest view; try the camera list for an ultra-wide lens.');
+  }else{z.disabled=true;$('zv').textContent='--';$('zHelp').textContent='This camera or browser has no zoom control. Choose another camera, or move the phone farther away.'}
+  try{
+    const dv=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'),sel=$('camSel');
+    sel.innerHTML='';dv.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('Camera '+(i+1));sel.appendChild(o)});
+    const cur=tr.getSettings().deviceId;if(cur)sel.value=cur;
+  }catch(e){}
+}
+async function setZoom(v){
+  const tr=stream&&stream.getVideoTracks()[0];if(!tr||$('zoom').disabled)return;
+  const z=$('zoom'),mn=+z.min,mx=+z.max;v=Math.max(mn,Math.min(mx,v));z.value=v;$('zv').textContent=v.toFixed(1)+'×';
+  try{await tr.applyConstraints({advanced:[{zoom:v}]})}catch(e){$('zHelp').textContent='Zoom failed: '+e.message}
+}
+async function openCam(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  const vc={width:{ideal:640},height:{ideal:480}};
+  if(camId)vc.deviceId={exact:camId};else vc.facingMode={ideal:facing};
+  stream=await navigator.mediaDevices.getUserMedia({video:vc,audio:false});
+  const v=$('v');v.srcObject=stream;await v.play();
+  const ov=$('ov');ov.width=v.videoWidth;ov.height=v.videoHeight;
+  $('stage').style.aspectRatio=v.videoWidth+'/'+v.videoHeight;
+  const fm=stream.getVideoTracks()[0].getSettings().facingMode;
+  $('stage').classList.toggle('mirror',camId?fm==='user':facing==='user');
+  await setupZoom();
+}
+async function start(){
+  try{
+    audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    await loadModel();
+    msg('Starting the camera...');
+    await openCam();
+    reset();running=true;$('bFlip').disabled=false;$('bStart').textContent='Stop';
+    msg($('gest').checked?'Stand so your whole body is visible. Show both thumbs up to start.':'Stand so your whole body is visible. Squat!');
+    requestAnimationFrame(loop);
+  }catch(e){msg('Could not start: '+(e&&e.message||e)+(location.protocol==='file:'?' (camera needs https, not a local file)':''));console.error(e)}
+}
+function stop(){running=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('bStart').textContent='Start camera';$('bFlip').disabled=true;msg('Stopped.')}
+
+function gesture(names,now){
+  let kind=null;
+  if(names.length===2&&names.every(n=>n==='Thumb_Up'))kind='start';
+  else if(names.length===2&&names.every(n=>n==='Open_Palm'))kind='stop';
+  if(MC&&MC.state!=='idle'&&MC.state!=='done'){$('hndTxt').textContent='metcon running';return}
+  $('hndTxt').textContent=kind==='start'?'hands: 👍👍':kind==='stop'?'hands: ✋✋':'hands: '+(names.length?names.map(n=>n||'?').join(' + '):'--');
+  const wanted=(kind==='start'&&!active)||(kind==='stop'&&active);
+  if(kind&&wanted&&standingNow()&&now-lastSwitch>2500){
+    if(hold.kind!==kind)hold={kind,t0:now};
+    else if(now-hold.t0>(kind==='start'?700:1000)){hold={kind:null,t0:0};lastSwitch=now;kind==='start'?startSet():stopSet()}
+  }else hold={kind:null,t0:0};
+}
+window.__t={gesture,feed,setMove,get active(){return active},get reps(){return reps},setActive};
+const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+
+// ---- voice framing help: tells the athlete where to move until the whole body is in the picture ----
+SAY.en.f={left:'Move left',right:'Move right',back:'Step back',closer:'Step closer',none:'I cannot see you. Step into the picture',ok:'Good. You are in the frame'};
+SAY.fi.f={left:'Siirry vasemmalle',right:'Siirry oikealle',back:'Astu taaksepäin',closer:'Astu lähemmäs',none:'En näe sinua. Astu kuvaan',ok:'Hyvä. Olet kuvassa'};
+const FR={cand:null,t0:0,lastSay:0,said:'',bad:false};
+function framing(L,vis,now){
+  if(MC&&(MC.state==='run'||MC.state==='done'))return;      // never talk over a running workout
+  if(active&&!window.__frameAlways)return;                   // nor over a running set
+  let want=null;
+  if(!L)want='none';
+  else{
+    const K=[0,11,12,23,24,25,26,27,28].filter(i=>vis(i)>0.4||i===0);
+    const need=[0,11,12,23,24,25,26,27,28];
+    const hidden=need.filter(i=>vis(i)<=0.4).length;
+    const xs=need.map(i=>L[i].x),ys=need.map(i=>L[i].y);
+    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+    const h=maxY-minY,cx=(minX+maxX)/2-0.5;
+    const mir=$('stage').classList.contains('mirror');
+    const side=dx=>mir?(dx>0?'left':'right'):(dx>0?'right':'left');   // direction from the athlete's own point of view
+    if(minY<0.02||maxY>0.98||hidden>=3||h>0.93||maxX-minX>0.92)want='back';
+    else if(minX<0.03||maxX>0.97||Math.abs(cx)>0.22)want=side(cx);
+    else if(h<0.4)want='closer';
+  }
+  if(want!==FR.cand){FR.cand=want;FR.t0=now}
+  if(now-FR.t0<900)return;                                   // the situation has to last a moment before we say it
+  if(want){
+    FR.bad=true;
+    if(FR.said!==want||now-FR.lastSay>5000){FR.said=want;FR.lastSay=now;const T=SAY[$('voice').value||'en'];if($('voice').value)say(T.f[want])}
+  }else if(FR.bad){
+    FR.bad=false;FR.said='';FR.lastSay=now;if($('voice').value)say(SAY[$('voice').value].f.ok)
+  }
+}
+window.__frame=framing;
+function loop(){
+  if(!running)return;
+  const v=$('v');
+  if(v.readyState>=2&&v.currentTime!==lastVT){
+    lastVT=v.currentTime;
+    const now=performance.now();
+    const r=lm.detectForVideo(v,now);
+    frames++;if(now-fpsT>1000){$('fps').textContent=frames+' frames/s analysed · side used: '+usedSide;frames=0;fpsT=now}
+    if(gr&&$('gest').checked&&now-lastG>100){lastG=now;try{const g=gr.recognizeForVideo(v,now);gesture((g.gestures||[]).map(x=>x[0]&&x[0].categoryName),now)}catch(e){}}
+    const ov=$('ov'),x=ov.getContext('2d');x.clearRect(0,0,ov.width,ov.height);
+    const L=r.landmarks&&r.landmarks[0],W=r.worldLandmarks&&r.worldLandmarks[0];
+    if(L)framing(L,i=>Math.min(L[i].visibility??1,1),now);else framing(null,null,now);
+    if(L&&W){
+      const vis=i=>Math.min(L[i].visibility??1,1);
+      const avg=arr=>arr.length?arr.reduce((p,c)=>p+c,0)/arr.length:null;
+      const sides=[0,1].map(q=>({h:q?24:23,k:q?26:25,a:q?28:27,sh:q?12:11}));
+      const legOk=sides.filter(q=>Math.min(vis(q.h),vis(q.k),vis(q.a))>0.5);
+      const torsoOk=sides.filter(q=>Math.min(vis(q.h),vis(q.sh))>0.5);
+      x.lineWidth=4;
+      BONES.forEach(([p,q])=>{x.strokeStyle='#ffffffaa';x.beginPath();x.moveTo(L[p].x*ov.width,L[p].y*ov.height);x.lineTo(L[q].x*ov.width,L[q].y*ov.height);x.stroke()});
+      legOk.forEach(q=>{x.strokeStyle='#3ccf7a';x.lineWidth=6;x.beginPath();x.moveTo(L[q.h].x*ov.width,L[q.h].y*ov.height);x.lineTo(L[q.k].x*ov.width,L[q.k].y*ov.height);x.lineTo(L[q.a].x*ov.width,L[q.a].y*ov.height);x.stroke()});
+      const knee=avg(legOk.map(q=>angle3(W[q.h],W[q.k],W[q.a])).filter(v=>v!=null));
+      // world y points down, so hip.y > knee.y means the hip is lower than the knee
+      const hipCm=avg(legOk.map(q=>(W[q.h].y-W[q.k].y)*100));
+      const lean=avg(torsoOk.map(q=>{const sh=W[q.sh],hp=W[q.h],v=[sh.x-hp.x,sh.y-hp.y,sh.z-hp.z],n=Math.hypot(...v);return n?Math.acos(Math.max(-1,Math.min(1,-v[1]/n)))*180/Math.PI:null}).filter(v=>v!=null));
+      usedSide=(legOk.length==2?'both legs':legOk.length?(legOk[0].h==23?'left leg':'right leg'):'no legs')+', '+torsoOk.length+' torso side(s)';
+      if(MOVE==='lunge'){
+        const both=sides.every(q=>Math.min(vis(q.h),vis(q.k),vis(q.a))>0.5);
+        if(both){
+          const [a0,a1]=sides.map(q=>angle3(W[q.h],W[q.k],W[q.a]));
+          const diff=Math.abs(W[sides[0].k].y-W[sides[1].k].y)*100;
+          feed({kl:a0,kr:a1,diff,lean},now);msg(' ');
+        }else msg('Both legs need to be visible for lunges. Step back.');
+      }else if(MOVE==='kbr'||MOVE==='kba'){
+        const wr=[15,16].filter(i=>vis(i)>0.3);
+        if(wr.length&&torsoOk.length){
+          const hipA=avg(sides.filter(q=>Math.min(vis(q.sh),vis(q.h),vis(q.k))>0.5).map(q=>angle3(W[q.sh],W[q.h],W[q.k])).filter(v=>v!=null));
+          feed({wristY:avg(wr.map(i=>L[i].y)),shoulderY:avg([11,12].map(i=>L[i].y)),noseY:L[0].y,eyeY:(L[2].y+L[5].y)/2,hip:hipA},now);msg(' ');
+        }else msg('Hands and shoulders need to be visible. Film from the side.');
+      }else if(isSq()){
+        if(knee!=null){
+          const wr=[15,16].filter(i=>vis(i)>0.3);let hand=null;
+          if(wr.length){const shY=avg([11,12].map(i=>L[i].y)),nY=L[0].y,span=shY-(nY-0.75*(shY-nY));hand=span>0?(shY-avg(wr.map(i=>L[i].y)))/span*100:null}
+          feed({knee,hip:hipCm,lean,hand},now);msg(' ')}
+        else msg('Legs not clearly visible. Step back or change the angle.');
+      }else{
+        if(lean!=null){
+          const ankleY=avg(sides.map(q=>L[q.a].y)),wrOk=Math.min(vis(15),vis(16))>0.3;
+          feed({lean,knee,ankleY,noseY:L[0].y,wristY:wrOk?Math.max(L[15].y,L[16].y):null},now);msg(' ');
+        }else msg('Torso not clearly visible. Step back or film from the side.');
+      }
+    }else msg('No body found. Step back so you fit in the picture.');
+  }
+  requestAnimationFrame(loop);
+}
+
+$('bStart').onclick=()=>running?stop():start();
+$('bFlip').onclick=async()=>{camId='';facing=facing==='user'?'environment':'user';try{await openCam()}catch(e){msg('Flip failed: '+e.message)}};
+$('bReset').onclick=reset;
+$('bGo').onclick=startSet;
+$('bEnd').onclick=stopSet;
+$('gest').onchange=()=>{if($('gest').checked&&running&&!gr){stop();start()}};
+$('bSim').onclick=simulate;
+$('down').oninput=e=>{DOWN=+e.target.value;$('dv').textContent=DOWN+'°';drawGraph()};
+$('wbt').oninput=e=>{WBT=+e.target.value;$('wv').textContent=WBT+'%'};
+$('hip').oninput=e=>{HIPM=+e.target.value;$('hv').textContent=HIPM+' cm'};
+$('lean').oninput=e=>{LEAN=+e.target.value;$('lv').textContent=LEAN+'°'};
+$('up').oninput=e=>{UP=+e.target.value;$('uv').textContent=UP+'°';drawGraph()};
+$('zoom').oninput=e=>setZoom(+e.target.value);
+$('zIn').onclick=()=>setZoom(+$('zoom').value+Math.max(0.5,+$('zoom').step||0.1));
+$('zOut').onclick=()=>setZoom(+$('zoom').value-Math.max(0.5,+$('zoom').step||0.1));
+$('camSel').onchange=async e=>{camId=e.target.value;try{await openCam()}catch(err){msg('Camera switch failed: '+err.message)}};
+$('mov').onchange=e=>setMove(e.target.value);
+$('floor').oninput=e=>{FLOORL=+e.target.value;$('fv').textContent=FLOORL+'°';drawGraph()};
+$('jump').oninput=e=>{JUMPP=+e.target.value;$('jv').textContent=JUMPP+'%'};
+
+// ---- metcon (made in REPGrind, link ?metcon=<base64url json>) ----
+const MC_NAME={squat:'Air squats',wb:'Wall balls',lunge:'Lunges',burpee:'Burpees',burpeej:'Jump burpees',kbr:'Russian KB swings',kba:'American KB swings'};
+let MC=null,mcTick=null,mcCd=5;
+const mmss=ms=>{const t=Math.floor(ms/100)/10,m=Math.floor(t/60);return m+':'+(t-m*60).toFixed(1).padStart(4,'0')};
+function mcParse(txt){
+  try{let c=String(txt).trim();const i=c.indexOf('metcon=');if(i>=0)c=c.slice(i+7).split(/[&#\s]/)[0];
+    c=c.replace(/-/g,'+').replace(/_/g,'/');while(c.length%4)c+='=';
+    const o=JSON.parse(decodeURIComponent(escape(atob(c))));
+    if(!o||o.v!==1||!Array.isArray(o.s)||!o.s.length||o.s.length>60)return null;
+    const s=o.s.map(x=>[Math.floor(+x[0]),String(x[1])]);
+    if(s.some(x=>!(x[0]>0&&x[0]<=999)||!MC_NAME[x[1]]))return null;
+    return {title:'For time',sets:s}}catch(e){return null}}
+function mcShow(){
+  const m=MC;$('mcEmpty').style.display=m?'none':'';$('mcInfo').style.display=m?'':'none';if(!m)return;
+  const tot=m.sets.reduce((a,x)=>a+x[0],0);
+  $('mcTitle').textContent=m.title+' · '+tot+' reps';
+  $('mcList').innerHTML=m.sets.map((x,i)=>`<li class="${m.state==='run'&&i===m.i?'cur':(m.i>i&&m.state!=='idle'?'dn':'')}">${x[0]} ${MC_NAME[x[1]]}</li>`).join('');
+  $('mcStart').disabled=!(m.state==='idle');$('mcQuit').style.display=(m.state==='count'||m.state==='run')?'':'none';
+}
+function mcLoad(txt){const m=mcParse(txt);if(!m){$('mcMsg').textContent='That is not a METGrind metcon code. Make one in REPGrind and tap Open in METGrind.';return false}
+  MC={...m,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mcMsg').textContent='';$('mcRes').style.display='none';mcShow();return true}
+async function mcStart(noCam){
+  if(!MC||MC.state!=='idle')return;
+  if(!noCam&&!running&&!window.__noCam){await start();if(!running){$('mcMsg').textContent='The camera did not start, so the metcon cannot start.';return}}
+  MC.state='count';MC.i=0;MC.splits=[];MC.reps=[];$('mgView').style.display='none';$('mov').disabled=true;mcShow();setActive(false);
+  const T=SAY[$('voice').value||'en'];let n=mcCd;
+  const step=()=>{if(!MC||MC.state!=='count')return;
+    if(n>0){$('mcChip').style.display='';$('mcChip').textContent='Starting in '+n;msg('Starting in '+n+'. First: '+MC.sets[0][0]+' '+MC_NAME[MC.sets[0][1]]);if(n<=3)say(String(n));beep();n--;setTimeout(step,1000)}
+    else{MC.state='run';MC.t0=performance.now();MG_T=0;MC.tSet=MC.t0;mcBegin(0,true);mcTick=setInterval(mcDraw,100)}};
+  step()}
+function mcBegin(i,first){
+  MC.i=i;const [n,id]=MC[ 'sets'][i];$('mov').value=id;setMove(id);reset();setActive(true);
+  const T=SAY[$('voice').value||'en'];say(first?T.go+'. '+n+' '+MC_NAME[id]:n+' '+MC_NAME[id]);beep();mcShow();mcDraw()}
+function mcDraw(){if(!MC||MC.state!=='run')return;
+  const [n,id]=MC.sets[MC.i];$('mcChip').style.display='';$('mcChip').textContent=(MC.i+1)+'/'+MC.sets.length+' · '+reps+'/'+n+' '+MC_NAME[id]+' · '+mmss(performance.now()-MC.t0);
+  msg('Metcon running: '+n+' '+MC_NAME[id]);const nw=Date.now();if(nw-MG_T>=1000){MG_T=nw;mgLive()}}
+function mcRep(){
+  if(!MC||MC.state!=='run')return;const [n]=MC.sets[MC.i];mcDraw();mgLive();if(reps<n)return;
+  const now=performance.now();MC.splits.push({set:MC.sets[MC.i],set_ms:now-MC.tSet,at_ms:now-MC.t0});MC.tSet=now;
+  if(MC.i+1<MC.sets.length)mcBegin(MC.i+1,false);else mcFinish()}
+function mcFinish(){
+  MC.state='done';clearInterval(mcTick);setActive(false);$('mov').disabled=false;
+  const tot=MC.splits[MC.splits.length-1].at_ms,T=SAY[$('voice').value||'en'];
+  beep();setTimeout(beep,180);setTimeout(beep,360);{const fi=($('voice').value||'en')==='fi',m=Math.floor(tot/60000),sc=Math.floor(tot/1000)%60;say(fi?'Valmis. '+m+' minuuttia '+sc+' sekuntia':'Finish. '+m+(m==1?' minute ':' minutes ')+sc+(sc==1?' second':' seconds'))};
+  $('mcChip').textContent='Done · '+mmss(tot);msg('Metcon done in '+mmss(tot));
+  const res={d:Date.now(),ms:Math.round(tot),sets:MC.sets,reps:MC.reps.map(Math.round)};
+  try{const a=JSON.parse(localStorage.getItem('mg_results')||'[]');a.unshift(res);localStorage.setItem('mg_results',JSON.stringify(a.slice(0,30)))}catch(e){}
+  mcShow();mgShowRes(res,true)}
+function mgText(r){const a=mgAnalyse(r);return 'METGrind · For time: '+mmss(r.ms)+'\n'+a.sets.map(x=>x.n+' '+MC_NAME[x.id]+' '+mmss(x.end-(x.first?r.reps[x.first-1]:0))).join('\n')}
+function mcText(){return MG_VIEW?mgText(MG_VIEW):''}
+function mcQuit(){if(!MC)return;clearInterval(mcTick);$('mgView').style.display='none';MC.state='idle';MC.i=0;setActive(false);$('mov').disabled=false;$('mcChip').style.display='none';msg('Metcon stopped.');mcShow()}
+$('mcLoad').onclick=()=>{if(mcLoad($('mcCode').value))$('mcCode').value=''};
+$('mcStart').onclick=()=>mcStart(false);$('mcQuit').onclick=mcQuit;
+$('mcAgain').onclick=()=>{if(!MG_VIEW)return;MC={title:'For time',sets:MG_VIEW.sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';$('mcChip').style.display='none';mcShow();window.scrollTo({top:0,behavior:'smooth'})};
+$('mcCopy').onclick=async()=>{try{await navigator.clipboard.writeText(mcText());$('mcCopy').textContent='Copied'}catch(e){$('mcMsg').textContent=mcText()}setTimeout(()=>$('mcCopy').textContent='Copy result',1500)};
+if(location.search.indexOf('metcon=')>=0)mcLoad(location.search);
+window.__t.goodRep=goodRep;window.__mc={fake:r=>mgShowRes(r,false),load:mcLoad,start:mcStart,get state(){return MC&&MC.state},get i(){return MC&&MC.i},get splits(){return MC&&MC.splits},setCd:n=>{mcCd=n},text:()=>MC&&MC.state==='done'?mcText():''};
+
+// ---- results and charts, like REPGrind: rep chart, time per rep, reps per minute, analysis, sets, history ----
+let MG_VIEW=null,MG_T=0;
+const fmtT=ms=>{ms=Math.max(0,ms);const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0')};
+const secT=ms=>ms==null||isNaN(ms)?'–':(ms/1000).toFixed(ms<10000?1:0)+'s';
+const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const escH=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function ctx2(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=Math.max(1,r.width*d);c.height=Math.max(1,r.height*d);const x=c.getContext('2d');x.scale(d,d);return[x,r.width,r.height]}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r||1))),f=r/p;return(f<=1?1:f<=2?2:f<=5?5:10)*p}
+function axes2(x,W,H,L_,B,ymax,unit){x.strokeStyle='#2a313b';x.fillStyle='#8a95a3';x.font='11px sans-serif';x.lineWidth=1;const step=niceStep(ymax/4);
+  for(let v=0;v<=ymax+1e-9;v+=step){const y=H-B-(v/ymax)*(H-B-8);x.beginPath();x.moveTo(L_,y);x.lineTo(W,y);x.stroke();x.fillText(+v.toFixed(1)+unit,0,y+4)}}
+function empty2(x,W,H,t){x.fillStyle='#8a95a3';x.font='13px sans-serif';x.textAlign='center';x.fillText(t,W/2,H/2);x.textAlign='left'}
+// sets of the metcon with the time of every rep: the sets are the metcon's own (21 squats, 21 burpees ...)
+function mgAnalyse(r){
+  const reps=r.reps,n=reps.length,sets=[],setOf=[];let i=0;
+  r.sets.forEach(([cnt,id],k)=>{if(i>=n)return;const first=i,last=Math.min(n,i+cnt)-1,ints=[];
+    for(let j=first+1;j<=last;j++)ints.push(reps[j]-reps[j-1]);
+    sets.push({k,n:cnt,id,first,last,start:reps[first],end:reps[last],rest:first?reps[first]-reps[first-1]:null,ints,done:last-first+1>=cnt});
+    for(let j=first;j<=last;j++)setOf[j]=sets.length-1;i=last+1});
+  const work=sets.flatMap(s=>s.ints),mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,m=mean(work),sd=work.length>1?Math.sqrt(work.reduce((x,y)=>x+(y-m)**2,0)/(work.length-1)):null;
+  let fat=null;if(work.length>=6){const k=Math.floor(work.length/3);fat=(mean(work.slice(-k))/mean(work.slice(0,k))-1)*100}
+  return{sets,setOf,work,mean:m,cv:m&&sd?sd/m*100:null,fast:work.length?Math.min(...work):null,slow:work.length?Math.max(...work):null,fat,
+    restSum:sets.slice(1).map(s=>s.rest).filter(x=>x!=null).reduce((x,y)=>x+y,0)}}
+function mgRaceSvg(r,a,live){
+  const W=Math.max(300,Math.round($('mgRace').clientWidth||600)),fs=12,H=Math.max(220,Math.round(W*.62)),L0=fs*3,R0=fs*4,T0=fs+8,B0=fs*2.2;
+  const tg=r.sets.reduce((s,x)=>s+x[0],0),reps=r.reps,last=reps.length?reps[reps.length-1]:0,el=live?Math.max(r.el||0,last):last;
+  const xm=Math.max(el*1.03,30000),ym=Math.max(tg,reps.length),X=t=>L0+t/xm*(W-L0-R0),Y=c=>H-B0-c/ym*(H-T0-B0);let h='';
+  const stp=[30e3,60e3,120e3,300e3,600e3,900e3].find(v=>xm/v<=7)||1800e3;for(let t=0;t<=xm;t+=stp)h+=`<text x="${X(t)}" y="${H-B0+fs+6}" fill="#6b737d" font-size="${fs}" text-anchor="middle">${fmtT(t)}</text>`;
+  let c=0;r.sets.forEach(([p,id],k)=>{c+=p;h+=`<line x1="${L0}" x2="${W-R0}" y1="${Y(c)}" y2="${Y(c)}" stroke="#2a3038" stroke-dasharray="3 4"/><text x="${L0-6}" y="${Y(c)+4}" fill="#6b737d" font-size="${fs}" text-anchor="end">${c}</text>`+
+    ((Y(c-p)-Y(c))>fs+4?`<text x="${L0+5}" y="${Y(c)-4}" fill="#4f5762" font-size="${fs-1}">${escH(MC_NAME[id]+' '+p)}</text>`:'')});
+  h+=`<line x1="${L0}" x2="${W-R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a414b"/>`;
+  if(live)h+=`<line x1="${X(el)}" x2="${X(el)}" y1="${T0}" y2="${Y(0)}" stroke="#ff8c00" stroke-opacity=".35"/>`;
+  const col='#3987e5',n=reps.length;
+  if(n){const fin=n>=tg,end=fin?reps[tg-1]:live?Math.max(el,reps[n-1]):reps[n-1];let pts=`${X(0)},${Y(0)}`;reps.forEach((t,k)=>{if(k<tg)pts+=` ${X(t)},${Y(k+1)}`});pts+=` ${X(end)},${Y(Math.min(n,tg))}`;
+    if(n>=3){const et=reps[n-1];h+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(et)}" y2="${Y(Math.min(n,tg))}" stroke="${col}" stroke-opacity=".55" stroke-dasharray="6 5" stroke-width="1.5"/>`}
+    h+=`<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round"/><circle cx="${X(end)}" cy="${Y(Math.min(n,tg))}" r="4.5" fill="${col}" stroke="#0b0d10" stroke-width="2"/>`+
+      `<text x="${X(end)+9}" y="${Y(Math.min(n,tg))+4}" fill="#e8eaed" font-size="${fs+1}" font-weight="700">${fin?fmtT(reps[tg-1])+' ✓':n}</text>`}
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rep chart">${h}</svg>`}
+function mgRepChart(r,a){
+  const[x,W,H]=ctx2($('c1'));const Lm=34,B=18,reps=r.reps;
+  if(reps.length<2){empty2(x,W,H,'Rep times appear after 2 reps');return}
+  const ints=reps.slice(1).map((t,i)=>t-reps[i]),isRest=ints.map((d,i)=>a.setOf[i+1]!==a.setOf[i]);
+  const workMax=Math.max(...ints.filter((d,i)=>!isRest[i]),1000),ymax=Math.ceil(workMax*1.25/1000);
+  axes2(x,W,H,Lm,B,ymax,'s');const n=ints.length,bw=(W-Lm)/n;
+  ints.forEach((d,i)=>{const v=Math.min(d/1000,ymax),h=(v/ymax)*(H-B-8);x.fillStyle=isRest[i]?'#4a5563':cssv('--acc');
+    x.fillRect(Lm+i*bw+Math.max(bw*.12,.5),H-B-h,Math.max(bw*.76,1),h);
+    if(isRest[i]&&d/1000>ymax){x.fillStyle='#8a95a3';x.font='10px sans-serif';x.fillText(Math.round(d/1000)+'s',Lm+i*bw,10)}});
+  if(a.mean){const y=H-B-(a.mean/1000/ymax)*(H-B-8);x.strokeStyle=cssv('--acc2');x.setLineDash([5,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(Lm,y);x.lineTo(W,y);x.stroke();x.setLineDash([])}
+  x.fillStyle='#8a95a3';x.font='11px sans-serif';const lab=Math.max(1,Math.ceil(n/8));for(let i=0;i<n;i+=lab)x.fillText(i+2,Lm+i*bw+bw/2-4,H-4)}
+function mgRpm(r,live){
+  const[x,W,H]=ctx2($('c2'));const Lm=34,B=18,reps=r.reps;
+  if(!reps.length){empty2(x,W,H,'Waiting for the first rep');return}
+  const el=live?Math.max(r.el||0,reps[reps.length-1]+1):reps[reps.length-1]+1,mins=Math.max(1,Math.ceil(el/60000)),b=new Array(mins).fill(0);
+  reps.forEach(t=>b[Math.min(mins-1,Math.floor(t/60000))]++);
+  const ymax=Math.max(5,Math.ceil(Math.max(...b)*1.2));axes2(x,W,H,Lm,B,ymax,'');const bw=(W-Lm)/mins;
+  b.forEach((v,i)=>{const h=(v/ymax)*(H-B-8);x.fillStyle=i===mins-1&&live?'#ffb347':cssv('--acc');x.fillRect(Lm+i*bw+bw*.15,H-B-h,bw*.7,h);
+    if(bw>18){x.fillStyle='#e9edf2';x.font='11px sans-serif';x.textAlign='center';x.fillText(v,Lm+i*bw+bw/2,H-B-h-3);x.textAlign='left'}});
+  x.fillStyle='#8a95a3';x.font='11px sans-serif';const lab=Math.max(1,Math.ceil(mins/8));for(let i=0;i<mins;i+=lab)x.fillText(i+1,Lm+i*bw+bw/2-3,H-4)}
+function mgTables(r,a,live){
+  const el=live?Math.max(r.el||0,r.reps.length?r.reps[r.reps.length-1]:0):(r.reps.length?r.reps[r.reps.length-1]:0),n=r.reps.length;
+  const tiles=[['Avg rep',secT(a.mean)],['Fastest rep',secT(a.fast)],['Slowest rep',secT(a.slow)],['Consistency',a.cv==null?'–':'±'+a.cv.toFixed(0)+'%'],
+    ['Fatigue',a.fat==null?'–':`<span class="${a.fat>15?'bad':''}">${a.fat>0?'+':''}${a.fat.toFixed(0)}%</span>`],['Sets',a.sets.length+'/'+r.sets.length],
+    ['Total change time',a.sets.length>1?fmtT(a.restSum):'–'],['Avg pace',n&&el>0?(n/(el/60000)).toFixed(1)+' /min':'–']];
+  $('an').innerHTML=tiles.map(t=>`<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div></div>`).join('');
+  $('anNote').textContent=a.fat==null?'Fatigue compares the last third of the reps with the first third (needs 7+ reps).':
+    (a.fat>=0?`Fatigue: the last third of reps took ${Math.abs(a.fat).toFixed(0)}% longer than the first third.`:`Fatigue: the last third of reps were ${Math.abs(a.fat).toFixed(0)}% faster than the first third.`)+' Consistency = how much rep times vary (lower is steadier).';
+  $('sets').innerHTML=a.sets.map((s,i)=>`<tr><td>${i+1}</td><td>${escH(MC_NAME[s.id])}</td><td>${s.last-s.first+1}/${s.n}</td><td>${fmtT(s.end-(s.first?r.reps[s.first-1]:0))}</td><td>${secT(s.ints.length?s.ints.reduce((x,y)=>x+y,0)/s.ints.length:null)}</td><td>${i?fmtT(s.rest):'–'}</td></tr>`).join('')||'<tr><td colspan=6 class="note">No reps yet</td></tr>'}
+function mgRender(r,live){const a=mgAnalyse(r);$('mgRace').innerHTML=mgRaceSvg(r,a,live);mgRepChart(r,a);mgRpm(r,live);mgTables(r,a,live);
+  $('mgRaceNote').textContent=live?'Live: updates every second and after each rep. Dashed line = steady pace from the start.':'Dashed line = steady pace from the start. Steps at the top of a set are the movements of the metcon.'}
+function mgLive(){if(!MC||MC.state!=='run')return;const v=$('mgView');v.style.display='';$('mcRes').style.display='none';
+  mgRender({sets:MC.sets,reps:MC.reps,el:performance.now()-MC.t0},true)}
+function mgShowRes(r,scroll){MG_VIEW=r;$('mgView').style.display='';$('mcRes').style.display='';$('mcTime').textContent=mmss(r.ms)+' · '+new Date(r.d).toLocaleDateString();mgRender(r,false);mgHist();
+  if(scroll)setTimeout(()=>$('mgView').scrollIntoView({behavior:'smooth',block:'start'}),50)}
+function mgResults(){try{return JSON.parse(localStorage.getItem('mg_results')||'[]').filter(x=>x&&x.reps&&x.sets)}catch(e){return[]}}
+function mgHist(){const a=mgResults(),c=$('mgHist');c.style.display=a.length?'':'none';
+  $('mgHistList').innerHTML=a.map((r,i)=>{const tot=r.sets.reduce((s,x)=>s+x[0],0);return `<button class="rhi" data-i="${i}"><b>${mmss(r.ms)}</b> · ${tot} reps · ${new Date(r.d).toLocaleDateString()}<span class="rhn">${escH(r.sets.map(x=>x[0]+' '+MC_NAME[x[1]]).join(', '))}</span></button>`}).join('');
+  $('mgHistList').querySelectorAll('.rhi').forEach(b=>b.onclick=()=>mgShowRes(a[+b.dataset.i],true))}
+mgHist();
+
+// ---- WOD Code: join the coach's workout as an athlete (camera here, results on the coach's phone) ----
+const WC_ID=n=>{n=String(n).toLowerCase();return /wall\s*ball/.test(n)?'wb':/air\s*squat|^squats?$/.test(n)?'squat':/lunge/.test(n)?'lunge':/burpee/.test(n)?(/jump|over/.test(n)?'burpeej':'burpee'):/swing/.test(n)?(/amer/.test(n)?'kba':'kbr'):null};
+function wcSets(st){ // the coach's workout as METGrind sets, or null
+  try{if(!st)return null;let l=[];
+    if(st.m===3&&/^L\|/.test(st.wi||'')){l=st.wi.slice(2).split(',').map(x=>{const m=x.match(/^(\d+):(?:(cal|min|m) )?(.*)$/i);return m&&!m[2]?[+m[1],WC_ID(m[3])]:null})}
+    else if(st.m===4&&st.wi){const a=st.wi.split('|'),parts=(a[0].match(/\d+/g)||[]).map(Number),nm=(a[2]||'').split(',').filter(Boolean);nm.length&&parts.forEach(p=>nm.forEach(n=>l.push([p,WC_ID(n)])))}
+    if(!l.length||l.some(x=>!x||!x[1]||!(x[0]>0)))return null;return l}catch(e){return null}}
+let wcSid=null,wcPrevS=0;
+function wcUI(api){
+  const on=!!api.status;$('wcOff').style.display=on?'none':'';$('wcOn').style.display=on?'':'none';if(!on)return;
+  const stx={connecting:'Looking for the coach…',live:'Connected to the coach · code '+api.code,lost:'Connection lost – reps are kept and sent when it is back.',removed:'The coach removed you from the workout.',full:'The workout is full (8 athletes).'}[api.status]||api.status;
+  $('wcStatus').textContent=stx+(api.pending?' · '+api.pending+' waiting':'');
+  $('wcBoard').innerHTML=api.board().map(l=>`<div>${l.me?'● ':''}${escH(l.name)}: <b>${l.reps}</b></div>`).join('')||'';
+  const st=api.coachState,sets=wcSets(st);$('wcLoad').disabled=!sets;
+  $('wcMsg').textContent=st&&!sets&&st.m!==0&&st.m!==1?'The coach\'s workout has movements METGrind cannot count yet. Reps still go to the coach.':(st&&(st.m===0||st.m===1)?'The coach counts plain reps. Pick a movement under Movement test; its reps go to the coach.':'');
+  if(st){
+    if(sets&&st.sid!==wcSid&&MC&&MC.state==='idle'||sets&&st.sid!==wcSid&&!MC){wcSid=st.sid;MC={title:'Coach\'s workout',sets:sets.map(x=>[x[0],x[1]]),state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';mcShow()}
+    if(st.s===1&&wcPrevS!==1&&$('wcFollow').checked&&MC&&MC.state==='idle'){mcCd=Math.max(1,Math.round(st.cd-(Date.now()-api.at)/1000));mcStart(false)}
+    wcPrevS=st.s}
+}
+function wcJoin(code,name){code=String(code).toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/O/g,'0').replace(/I/g,'1').slice(0,4);
+  if(code.length!==4){$('wcMsg').textContent='Type the 4-character code.';return}if(!name){$('wcMsg').textContent='Type your name.';return}
+  try{localStorage.setItem('mg_name',name)}catch(e){}wcSid=null;wcPrevS=0;$('wcMsg').textContent='';MG_NET.join(code,name,wcUI)}
+$('wcJoin').onclick=()=>wcJoin($('wcCode').value,$('wcName').value.trim());
+$('wcLeave').onclick=()=>{MG_NET.leave();wcUI(MG_NET)};
+$('wcLoad').onclick=()=>{const sets=wcSets(MG_NET.coachState);if(sets&&(!MC||MC.state==='idle'||MC.state==='done')){MC={title:'Coach\'s workout',sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';mcShow()}};
+try{$('wcName').value=localStorage.getItem('mg_name')||''}catch(e){}
+{const m=(location.search+location.hash).match(/wod=([A-Za-z0-9]{4})/);if(m){$('wcCode').value=m[1].toUpperCase();if($('wcName').value)setTimeout(()=>wcJoin(m[1],$('wcName').value.trim()),300)}}
+$('mdl').onchange=()=>{if(running){stop();start()}};
+
+// ---- two pages from one source: METGrind (metcon) and Practice movements; the sliders are shared through localStorage ----
+const PRACTICE=document.body.classList.contains('m-test');
+if(!PRACTICE)$('gest').checked=false;
+{const ids=[...document.querySelectorAll('input[type=range]')].map(e=>e.id).filter(i=>i&&i!=='zoom').concat(['mdl','voice','hands']);
+ let sv={};try{sv=JSON.parse(localStorage.getItem('mg_thr')||'{}')}catch(e){}
+ const ev=el=>el.tagName==='SELECT'||el.type==='checkbox'?'change':'input';
+ ids.forEach(id=>{const el=$(id);if(!el||sv[id]==null)return;if(el.type==='checkbox')el.checked=!!sv[id];else el.value=sv[id];el.dispatchEvent(new Event(ev(el)))});
+ const save=()=>{const o={};ids.forEach(id=>{const el=$(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});try{localStorage.setItem('mg_thr',JSON.stringify(o))}catch(e){}};
+ ids.forEach(id=>{const el=$(id);el&&el.addEventListener(ev(el),save)})}
+setMove('squat');
+</script>
+</body>
+</html>
