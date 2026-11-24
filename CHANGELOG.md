@@ -2,6 +2,9 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.4.5
+- **Logo:** the kettlebell is now round (a ball with a handle), with the claw marks.
+
 ## v0.4.4
 - **Logo:** a kettlebell with the REPGrind claw marks, on the orange square (v0.4.3 had a barbell, v0.4.2 a kettlebell with a check mark).
 
