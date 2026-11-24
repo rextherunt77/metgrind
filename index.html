@@ -38,7 +38,7 @@ small{color:#8b92a5}
 
 <div class="stage" id="stage">
   <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
-  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">hips --</span> <span class="chip" id="leanTxt">lean --°</span></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">hips --</span> <span class="chip" id="leanTxt">lean --°</span> <span class="chip" id="hndTxt">hands --</span></div>
   <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
 </div>
 
@@ -48,7 +48,21 @@ small{color:#8b92a5}
   <button id="bReset" class="sec">Reset</button>
 </div>
 <div class="row">
+  <button id="bGo" class="sec">Start set</button>
+  <button id="bEnd" class="sec">Stop set</button>
+</div>
+<div class="row">
   <button id="bSim" class="sec">Simulate 6 squats (no camera)</button>
+</div>
+
+<div class="card">
+  <label>Voice for "no rep" and its cause
+    <select id="voice"><option value="">off</option><option value="en" selected>English</option><option value="fi">Suomi</option></select>
+  </label>
+  <label style="margin-top:8px">Hand gestures: both thumbs up = start, both open palms = stop
+    <input type="checkbox" id="gest" checked>
+  </label>
+  <small>With gestures on, squats only count after a start. Gestures are read only while you stand, held for about a second, and the hands must be clearly visible to the camera. Arms out front during a squat can look like open palms, so the stop gesture is ignored mid-squat.</small>
 </div>
 
 <div class="card">
@@ -78,9 +92,26 @@ const MODEL=k=>'https://storage.googleapis.com/mediapipe-models/pose_landmarker/
 
 let DOWN=110, UP=160, HIPM=0, LEAN=45;
 let reps=0, state='up', reached=false, minAng=180, bestHip=-99, leanAtBottom=null, kneeOk=false, hipOk=false, sm=null, tStart=0, hist=[];
+let active=false, gr=null, hold={kind:null,t0:0}, lastSwitch=-1e9, lastG=0, gmod=null;
 let lm=null, lmKey=null, stream=null, facing='user', running=false, audio=null, simTimer=null;
 let lastVT=-1, frames=0, fpsT=performance.now(), usedSide='';
 
+function say(t){
+  const L=$('voice').value;if(!L)return;
+  try{const sy=window.speechSynthesis;sy.resume();if(sy.speaking||sy.pending)sy.cancel();
+    const u=new SpeechSynthesisUtterance(t);u.lang=L==='fi'?'fi-FI':'en-US';u.rate=1.05;
+    setTimeout(()=>sy.speak(u),60)}catch(e){}
+}
+const SAY={
+  en:{no:'No rep',knee:'not deep enough',hip:'hips too high',lean:'leaning too far forward',and:' and ',go:'Go',stop:n=>'Stop. '+n+(n==1?' rep':' reps')},
+  fi:{no:'Ei toistoa',knee:'ei tarpeeksi syvä',hip:'lonkat liian ylhäällä',lean:'liikaa eteenpäin kallistunut',and:' ja ',go:'Aloita',stop:n=>'Lopeta. '+n+(n==1?' toisto':' toistoa')}
+};
+const counting=()=>active||!$('gest').checked;
+function setActive(a){
+  active=a;$('actTxt').textContent=a?'SET RUNNING':'set not started';
+}
+function startSet(){reset();setActive(true);beep();say(SAY[$('voice').value||'en'].go)}
+function stopSet(){const n=reps;setActive(false);beep();say(SAY[$('voice').value||'en'].stop(n))}
 function msg(t){$('msg').textContent=t}
 function beep(){try{if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.09)}catch(e){}}
 function logRep(txt,no){const li=document.createElement('li');if(no)li.className='no';li.textContent=txt;$('log').prepend(li)}
@@ -102,6 +133,7 @@ function feed(m,t){
   $('angTxt').textContent='knee '+Math.round(sm)+'°';
   $('hipTxt').textContent='hips '+(m.hip>=0?'+':'')+m.hip.toFixed(0)+' cm vs knees';
   $('leanTxt').textContent='lean '+(m.lean==null?'--':Math.round(m.lean))+'°';
+  if(!counting()){state='up';$('stTxt').textContent='standing';drawGraph();return}
   if(state==='up'){
     if(sm<UP){state='down';minAng=sm;bestHip=m.hip;leanAtBottom=m.lean;kneeOk=false;hipOk=false;tStart=t}
   }else{
@@ -118,7 +150,10 @@ function feed(m,t){
         if(!kneeOk)why.push('knee only '+Math.round(minAng)+'° (need '+DOWN+'°)');
         if(!hipOk)why.push('hips not below knees ('+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm, need '+HIPM+')');
         if(!leanOk)why.push('leaning '+Math.round(leanAtBottom)+'° (max '+LEAN+'°)');
-        if(why.length)logRep('No rep: '+why.join('; '),true);
+        if(why.length){logRep('No rep: '+why.join('; '),true);
+          const T=SAY[$('voice').value||'en'],c=[];
+          if(!kneeOk)c.push(T.knee);if(!hipOk)c.push(T.hip);if(!leanOk)c.push(T.lean);
+          say(T.no+', '+c.join(T.and))}
       }
       state='up';
     }
@@ -146,7 +181,7 @@ function reset(){reps=0;state='up';reached=false;sm=null;hist=[];$('reps').textC
 // ---- simulation (checks the counting logic without a camera) ----
 function simulate(){
   if(simTimer){clearInterval(simTimer);simTimer=null}
-  reset();
+  reset();setActive(true);
   // knee, hips below knees (cm), torso lean. Expected: reps 1,2,5 count; 3 (hips high), 4 (leaning), 6 (shallow) do not.
   const cases=[[80,4,25],[85,2,30],[82,-5,20],[80,5,65],[78,6,35],[135,-12,20]];
   let f=0;const fps=30,per=2.4,stand=0.6;
@@ -172,6 +207,13 @@ async function loadModel(){
   try{lm=await mod.PoseLandmarker.createFromOptions(fs,opts('GPU'))}
   catch(e){lm=await mod.PoseLandmarker.createFromOptions(fs,opts('CPU'))}
   lmKey=key;
+  gmod=mod;
+  if($('gest').checked&&!gr){
+    msg('Loading the hand gesture model...');
+    const go=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',delegate:d},runningMode:'VIDEO',numHands:2});
+    try{gr=await mod.GestureRecognizer.createFromOptions(fs,go('GPU'))}
+    catch(e){try{gr=await mod.GestureRecognizer.createFromOptions(fs,go('CPU'))}catch(e2){gr=null;$('gest').checked=false;msg('Gesture model failed to load; gestures turned off.')}}
+  }
 }
 async function openCam(){
   if(stream)stream.getTracks().forEach(t=>t.stop());
@@ -188,12 +230,24 @@ async function start(){
     msg('Starting the camera...');
     await openCam();
     reset();running=true;$('bFlip').disabled=false;$('bStart').textContent='Stop';
-    msg('Stand so your whole body is visible. Squat!');
+    msg($('gest').checked?'Stand so your whole body is visible. Show both thumbs up to start.':'Stand so your whole body is visible. Squat!');
     requestAnimationFrame(loop);
   }catch(e){msg('Could not start: '+(e&&e.message||e)+(location.protocol==='file:'?' (camera needs https, not a local file)':''));console.error(e)}
 }
 function stop(){running=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('bStart').textContent='Start camera';$('bFlip').disabled=true;msg('Stopped.')}
 
+function gesture(names,now){
+  let kind=null;
+  if(names.length===2&&names.every(n=>n==='Thumb_Up'))kind='start';
+  else if(names.length===2&&names.every(n=>n==='Open_Palm'))kind='stop';
+  $('hndTxt').textContent=kind==='start'?'hands: 👍👍':kind==='stop'?'hands: ✋✋':'hands: '+(names.length?names.map(n=>n||'?').join(' + '):'--');
+  const wanted=(kind==='start'&&!active)||(kind==='stop'&&active);
+  if(kind&&wanted&&state==='up'&&now-lastSwitch>2500){
+    if(hold.kind!==kind)hold={kind,t0:now};
+    else if(now-hold.t0>(kind==='start'?700:1000)){hold={kind:null,t0:0};lastSwitch=now;kind==='start'?startSet():stopSet()}
+  }else hold={kind:null,t0:0};
+}
+window.__t={gesture,feed,get active(){return active},get reps(){return reps},setActive};
 const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
 function loop(){
   if(!running)return;
@@ -203,6 +257,7 @@ function loop(){
     const now=performance.now();
     const r=lm.detectForVideo(v,now);
     frames++;if(now-fpsT>1000){$('fps').textContent=frames+' frames/s analysed · side used: '+usedSide;frames=0;fpsT=now}
+    if(gr&&$('gest').checked&&now-lastG>100){lastG=now;try{const g=gr.recognizeForVideo(v,now);gesture((g.gestures||[]).map(x=>x[0]&&x[0].categoryName),now)}catch(e){}}
     const ov=$('ov'),x=ov.getContext('2d');x.clearRect(0,0,ov.width,ov.height);
     const L=r.landmarks&&r.landmarks[0],W=r.worldLandmarks&&r.worldLandmarks[0];
     if(L&&W){
@@ -232,6 +287,9 @@ function loop(){
 $('bStart').onclick=()=>running?stop():start();
 $('bFlip').onclick=async()=>{facing=facing==='user'?'environment':'user';try{await openCam()}catch(e){msg('Flip failed: '+e.message)}};
 $('bReset').onclick=reset;
+$('bGo').onclick=startSet;
+$('bEnd').onclick=stopSet;
+$('gest').onchange=()=>{if($('gest').checked&&running&&!gr){stop();start()}};
 $('bSim').onclick=simulate;
 $('down').oninput=e=>{DOWN=+e.target.value;$('dv').textContent=DOWN+'°';drawGraph()};
 $('hip').oninput=e=>{HIPM=+e.target.value;$('hv').textContent=HIPM+' cm'};
