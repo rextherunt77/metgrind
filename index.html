@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111418">
-<title>METGrind</title>
+<title>METGrind (beta)</title>
 <style>
 :root{--bg:#111418;--card:#1b2027;--line:#2a313b;--txt:#e9edf2;--mut:#8a95a3;--acc:#ff8c00;--ink:#14171c;--acc2:#3fb6ff;--ok:#3ccf7a;--warn:#ffc53d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:12px 12px 40px;max-width:720px;margin:auto}
 h1{font-size:17px;margin:0 0 2px;letter-spacing:.5px}
 h1 b{color:var(--acc)}
+.beta{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink);background:var(--warn);border-radius:6px;padding:2px 6px;vertical-align:2px;margin-left:4px}
 .mct{font-size:19px;font-weight:800;margin:6px 0}.mcs{color:var(--mut);font-size:13px;margin:6px 0}
 #mcList,#mcSplits{padding-left:22px;margin:6px 0;list-style:decimal;max-height:none;font-size:14px}
 #mcList li.cur{color:var(--acc);font-weight:700}#mcList li.dn{color:var(--mut);text-decoration:line-through}
@@ -46,7 +47,7 @@ small{color:var(--mut)}
 </style>
 </head>
 <body>
-<h1>MET<b>Grind</b> <small id="ver">v0.4</small></h1>
+<h1>MET<b>Grind</b> <small id="ver">v0.4.1</small> <span class="beta">beta</span></h1>
 <div class="sub">Do metcons made in REPGrind: the phone camera counts the reps and times the metcon. Everything runs on this phone; no video is sent anywhere.</div>
 <div class="card" id="mcCard" style="margin-top:0">
   <b class="h">Metcon</b>

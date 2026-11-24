@@ -2,6 +2,9 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.4.1
+- METGrind is marked **beta** (page title and a badge next to the name): it is under development.
+
 ## v0.4 – METGrind
 - **New name and scope:** METGrind. REPGrind is where you make a metcon, METGrind is where you do it. REPGrind's *Open in METGrind* button sends a chipper or rep scheme here as `?metcon=<code>`; you can also paste the link or code.
 - Metcon runner: 5-4-3-2-1 countdown, then the clock runs; each set switches the camera to that movement, voice says the next one, and the metcon ends when the last rep is counted. Result with total time and splits, *Copy result*, last 30 results kept on the phone.
