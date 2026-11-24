@@ -2,6 +2,12 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## 0.3 (2026-11-24)
+- New movements: wall ball (squat standard plus hands must reach a hand-height line at the top), lunge (front knee bend, back knee dropped, upright torso), kettlebell swing Russian (hands above eye level) and American (hands overhead), both with hips open at the top.
+- Camera zoom (slider and +/- buttons where the camera supports it) and a camera list, e.g. to pick the ultra-wide lens.
+- Same colours and look as the RepGrind app.
+- New voice causes: not high enough, hips not open, back knee not low enough.
+
 ## 0.2 (2026-11-24)
 - New movement selector: air squat, burpee (no jump), burpee with jump.
 - Burpee: counts when the torso goes near horizontal (floor line slider) and you come back upright. With the jump variant, the feet must also leave the floor (jump height slider) and, optionally, the hands go above the head.
