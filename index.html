@@ -38,7 +38,7 @@ small{color:#8b92a5}
 
 <div class="stage" id="stage">
   <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
-  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="stTxt">ready</span></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">knee --°</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">hips --</span> <span class="chip" id="leanTxt">lean --°</span></div>
   <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
 </div>
 
@@ -48,7 +48,7 @@ small{color:#8b92a5}
   <button id="bReset" class="sec">Reset</button>
 </div>
 <div class="row">
-  <button id="bSim" class="sec">Simulate 5 squats (no camera)</button>
+  <button id="bSim" class="sec">Simulate 6 squats (no camera)</button>
 </div>
 
 <div class="card">
@@ -56,10 +56,14 @@ small{color:#8b92a5}
   <input type="range" id="down" min="60" max="140" value="110">
   <label>and then back above <b id="uv">160°</b></label>
   <input type="range" id="up" min="130" max="178" value="160">
+  <label style="margin-top:8px">Hips must be below knees by <b id="hv">0 cm</b></label>
+  <input type="range" id="hip" min="-10" max="15" value="0">
+  <label>Chest upright: torso leans at most <b id="lv">45°</b> from vertical</label>
+  <input type="range" id="lean" min="15" max="80" value="45">
   <label style="margin-top:6px">Model
     <select id="mdl"><option value="lite">lite (fast)</option><option value="full">full</option><option value="heavy">heavy (slow)</option></select>
   </label>
-  <small>180° = straight leg, about 90° = thighs parallel. Lower the first slider to demand a deeper squat.</small>
+  <small>A rep needs all three at the bottom: knee angle low enough, hips below the knees, torso upright. 180° knee = straight leg. Camera tilt affects the hip and lean numbers, so keep the phone level.</small>
 </div>
 
 <div class="card"><canvas id="gr" width="600" height="220"></canvas><small>Knee angle, last 8 s. Red line = bottom threshold, green = top.</small></div>
@@ -72,8 +76,8 @@ const V='0.10.14';
 const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+V;
 const MODEL=k=>'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_'+k+'/float16/1/pose_landmarker_'+k+'.task';
 
-let DOWN=110, UP=160;
-let reps=0, state='up', reached=false, minAng=180, sm=null, tStart=0, hist=[];
+let DOWN=110, UP=160, HIPM=0, LEAN=45;
+let reps=0, state='up', reached=false, minAng=180, bestHip=-99, leanAtBottom=null, kneeOk=false, hipOk=false, sm=null, tStart=0, hist=[];
 let lm=null, lmKey=null, stream=null, facing='user', running=false, audio=null, simTimer=null;
 let lastVT=-1, frames=0, fpsT=performance.now(), usedSide='';
 
@@ -89,24 +93,37 @@ function angle3(a,b,c){
   return Math.acos(Math.max(-1,Math.min(1,d/n)))*180/Math.PI;
 }
 
-// the counter: up -> going down -> reached depth -> back up = 1 rep
-function feed(a,t){
+// the counter: up -> going down -> back up = 1 rep, only if the bottom met all three rules
+// m = {knee: degrees, hip: cm hips are below knees, lean: degrees torso from vertical or null}
+function feed(m,t){
+  const a=m.knee;
   sm=sm==null?a:sm+0.5*(a-sm);
   hist.push({t,a:sm});while(hist.length&&t-hist[0].t>8000)hist.shift();
   $('angTxt').textContent='knee '+Math.round(sm)+'°';
+  $('hipTxt').textContent='hips '+(m.hip>=0?'+':'')+m.hip.toFixed(0)+' cm vs knees';
+  $('leanTxt').textContent='lean '+(m.lean==null?'--':Math.round(m.lean))+'°';
   if(state==='up'){
-    if(sm<UP){state='down';reached=false;minAng=sm;tStart=t}
+    if(sm<UP){state='down';minAng=sm;bestHip=m.hip;leanAtBottom=m.lean;kneeOk=false;hipOk=false;tStart=t}
   }else{
     minAng=Math.min(minAng,sm);
-    if(sm<=DOWN)reached=true;
+    if(sm<=DOWN)kneeOk=true;
+    if(m.hip>=HIPM)hipOk=true;
+    if(m.hip>bestHip){bestHip=m.hip;leanAtBottom=m.lean}
     if(sm>=UP){
       const dur=(t-tStart)/1000;
-      if(reached&&dur>0.4){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · bottom '+Math.round(minAng)+'° · '+dur.toFixed(1)+' s')}
-      else if(minAng<UP-12&&dur>0.3){logRep('No rep · only down to '+Math.round(minAng)+'° (need '+DOWN+'°)',true)}
+      const leanOk=leanAtBottom==null||leanAtBottom<=LEAN;
+      if(kneeOk&&hipOk&&leanOk&&dur>0.4){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · knee '+Math.round(minAng)+'° · hips '+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm · lean '+(leanAtBottom==null?'--':Math.round(leanAtBottom))+'° · '+dur.toFixed(1)+' s')}
+      else if(minAng<UP-12&&dur>0.3){
+        const why=[];
+        if(!kneeOk)why.push('knee only '+Math.round(minAng)+'° (need '+DOWN+'°)');
+        if(!hipOk)why.push('hips not below knees ('+(bestHip>=0?'+':'')+bestHip.toFixed(0)+' cm, need '+HIPM+')');
+        if(!leanOk)why.push('leaning '+Math.round(leanAtBottom)+'° (max '+LEAN+'°)');
+        if(why.length)logRep('No rep: '+why.join('; '),true);
+      }
       state='up';
     }
   }
-  $('stTxt').textContent=state==='up'?'standing':(reached?'deep enough, stand up':'going down');
+  $('stTxt').textContent=state==='up'?'standing':(kneeOk&&hipOk?'deep enough, stand up':'going down');
   drawGraph();
 }
 
@@ -124,23 +141,23 @@ function drawGraph(){
   x.stroke();
 }
 
-function reset(){reps=0;state='up';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='knee --°';$('stTxt').textContent='ready';drawGraph()}
+function reset(){reps=0;state='up';reached=false;sm=null;hist=[];$('reps').textContent='0';$('log').innerHTML='';$('angTxt').textContent='knee --°';$('stTxt').textContent='ready';$('hipTxt').textContent='hips --';$('leanTxt').textContent='lean --°';drawGraph()}
 
 // ---- simulation (checks the counting logic without a camera) ----
 function simulate(){
   if(simTimer){clearInterval(simTimer);simTimer=null}
   reset();
-  const depths=[80,85,90,135,82]; // 4th is too shallow: must not count
+  // knee, hips below knees (cm), torso lean. Expected: reps 1,2,5 count; 3 (hips high), 4 (leaning), 6 (shallow) do not.
+  const cases=[[80,4,25],[85,2,30],[82,-5,20],[80,5,65],[78,6,35],[135,-12,20]];
   let f=0;const fps=30,per=2.4,stand=0.6;
-  const total=depths.length*(per+stand)*fps;
-  msg('Simulating: 5 squats, the 4th one is too shallow and should not count.');
+  const total=cases.length*(per+stand)*fps;
+  msg('Simulating 6 squats: 3 should count, 3 should not (hips high, leaning, shallow).');
   simTimer=setInterval(()=>{
     const t=f/fps,i=Math.floor(t/(per+stand));
-    if(f>=total||i>=depths.length){clearInterval(simTimer);simTimer=null;msg('Simulation done: expected 4 reps and 1 "no rep".');return}
-    const p=t-i*(per+stand);
-    let a=170;
-    if(p<per){const k=0.5-0.5*Math.cos(2*Math.PI*p/per);a=170-(170-depths[i])*k}
-    feed(a+(Math.random()-.5)*3,t*1000);f++;
+    if(f>=total||i>=cases.length){clearInterval(simTimer);simTimer=null;msg('Simulation done: expected 3 reps and 3 "No rep".');return}
+    const p=t-i*(per+stand),[kn,hp,ln]=cases[i];
+    let k=0;if(p<per)k=0.5-0.5*Math.cos(2*Math.PI*p/per);
+    feed({knee:170-(170-kn)*k+(Math.random()-.5)*3,hip:-25+(hp+25)*k,lean:10+(ln-10)*k},t*1000);f++;
   },1000/fps);
 }
 
@@ -198,9 +215,14 @@ function loop(){
       if(use.length){
         const angs=use.map(s=>angle3(W[s.h],W[s.k],W[s.a])).filter(a=>a!=null);
         const a=angs.reduce((p,c)=>p+c,0)/angs.length;
+        const avg=arr=>arr.length?arr.reduce((p,c)=>p+c,0)/arr.length:null;
+        // world y points down, so hip.y > knee.y means the hip is lower than the knee
+        const hipCm=avg(use.map(s=>(W[s.h].y-W[s.k].y)*100));
+        const leans=use.filter(s=>Math.min(vis(s.h),vis(s.h-12))>0.5).map(s=>{const sh=W[s.h-12],hp=W[s.h],v=[sh.x-hp.x,sh.y-hp.y,sh.z-hp.z],n=Math.hypot(...v);return n?Math.acos(Math.max(-1,Math.min(1,-v[1]/n)))*180/Math.PI:null}).filter(x=>x!=null);
+        const lean=avg(leans);
         usedSide=use.length==2?'both legs':(use[0]===l?'left leg':'right leg');
         use.forEach(s=>{x.strokeStyle='#3fb950';x.lineWidth=6;x.beginPath();x.moveTo(L[s.h].x*ov.width,L[s.h].y*ov.height);x.lineTo(L[s.k].x*ov.width,L[s.k].y*ov.height);x.lineTo(L[s.a].x*ov.width,L[s.a].y*ov.height);x.stroke()});
-        feed(a,now);msg(' ');
+        feed({knee:a,hip:hipCm,lean},now);msg(' ');
       }else msg('Legs not clearly visible. Step back or change the angle.');
     }else msg('No body found. Step back so you fit in the picture.');
   }
@@ -212,6 +234,8 @@ $('bFlip').onclick=async()=>{facing=facing==='user'?'environment':'user';try{awa
 $('bReset').onclick=reset;
 $('bSim').onclick=simulate;
 $('down').oninput=e=>{DOWN=+e.target.value;$('dv').textContent=DOWN+'°';drawGraph()};
+$('hip').oninput=e=>{HIPM=+e.target.value;$('hv').textContent=HIPM+' cm'};
+$('lean').oninput=e=>{LEAN=+e.target.value;$('lv').textContent=LEAN+'°'};
 $('up').oninput=e=>{UP=+e.target.value;$('uv').textContent=UP+'°';drawGraph()};
 $('mdl').onchange=()=>{if(running){stop();start()}};
 drawGraph();
