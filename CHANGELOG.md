@@ -2,6 +2,12 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.4 – METGrind
+- **New name and scope:** METGrind. REPGrind is where you make a metcon, METGrind is where you do it. REPGrind's *Open in METGrind* button sends a chipper or rep scheme here as `?metcon=<code>`; you can also paste the link or code.
+- Metcon runner: 5-4-3-2-1 countdown, then the clock runs; each set switches the camera to that movement, voice says the next one, and the metcon ends when the last rep is counted. Result with total time and splits, *Copy result*, last 30 results kept on the phone.
+- Movements as before: air squat, wall ball, lunge, burpee, jump burpee, Russian and American kettlebell swing. The movement test below the metcon card is unchanged.
+- Competing is next: live with a code first, a shared leaderboard later.
+
 ## 0.3 (2026-11-24)
 - New movements: wall ball (squat standard plus hands must reach a hand-height line at the top), lunge (front knee bend, back knee dropped, upright torso), kettlebell swing Russian (hands above eye level) and American (hands overhead), both with hips open at the top.
 - Camera zoom (slider and +/- buttons where the camera supports it) and a camera list, e.g. to pick the ultra-wide lens.

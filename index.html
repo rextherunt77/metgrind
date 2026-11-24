@@ -4,12 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111418">
-<title>RepGrind camera test v0.3</title>
+<title>METGrind</title>
 <style>
 :root{--bg:#111418;--card:#1b2027;--line:#2a313b;--txt:#e9edf2;--mut:#8a95a3;--acc:#ff8c00;--ink:#14171c;--acc2:#3fb6ff;--ok:#3ccf7a;--warn:#ffc53d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:12px 12px 40px;max-width:720px;margin:auto}
 h1{font-size:17px;margin:0 0 2px;letter-spacing:.5px}
+h1 b{color:var(--acc)}
+.mct{font-size:19px;font-weight:800;margin:6px 0}.mcs{color:var(--mut);font-size:13px;margin:6px 0}
+#mcList,#mcSplits{padding-left:22px;margin:6px 0;list-style:decimal;max-height:none;font-size:14px}
+#mcList li.cur{color:var(--acc);font-weight:700}#mcList li.dn{color:var(--mut);text-decoration:line-through}
+input#mcCode{flex:1;min-width:0;background:#151a20;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:11px;font-size:14px;font-family:inherit}
 h1 small{color:var(--acc);font-weight:600;letter-spacing:0}
 .sub{color:var(--mut);font-size:13px;margin-bottom:8px}
 .stage{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;margin:10px 0}
@@ -41,11 +46,20 @@ small{color:var(--mut)}
 </style>
 </head>
 <body>
-<h1>REPGRIND · camera rep test <small id="ver">v0.3</small></h1>
-<div class="sub">Standalone test, not part of RepGrind. Everything runs on this phone; no video is sent anywhere.</div>
+<h1>MET<b>Grind</b> <small id="ver">v0.4</small></h1>
+<div class="sub">Do metcons made in REPGrind: the phone camera counts the reps and times the metcon. Everything runs on this phone; no video is sent anywhere.</div>
+<div class="card" id="mcCard" style="margin-top:0">
+  <b class="h">Metcon</b>
+  <div id="mcEmpty" class="mcs">Make a metcon in REPGrind (chipper or rep scheme) and tap <b>Open in METGrind</b>, or paste its link or code here.</div>
+  <div id="mcInfo" style="display:none"><div class="mct" id="mcTitle"></div><ol id="mcList"></ol></div>
+  <div class="row"><input id="mcCode" placeholder="Paste metcon link or code" autocomplete="off"><button id="mcLoad" class="sec" style="flex:0 0 80px;min-width:0">Load</button></div>
+  <div class="row"><button id="mcStart" class="p" disabled>Start metcon</button><button id="mcQuit" class="sec" style="display:none">Quit</button></div>
+  <small id="mcMsg"></small>
+</div>
+<div class="card" id="mcRes" style="display:none"><b class="h">Result</b><div class="mct" id="mcTime"></div><ol id="mcSplits"></ol><div class="row"><button id="mcCopy" class="sec">Copy result</button><button id="mcAgain" class="p">Do it again</button></div></div>
 
-<div class="card" style="margin-top:0">
-  <label>Movement
+<div class="card" id="movCard">
+  <label>Movement test
     <select id="mov"><option value="squat">Air squat</option><option value="burpee">Burpee (no jump)</option><option value="burpeej">Burpee with jump</option><option value="wb">Wall ball</option><option value="lunge">Lunge</option><option value="kbr">Kettlebell swing (Russian, eye level)</option><option value="kba">Kettlebell swing (American, overhead)</option></select>
   </label>
   <small id="movHelp"></small>
@@ -53,7 +67,7 @@ small{color:var(--mut)}
 
 <div class="stage" id="stage">
   <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
-  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="angTxt">--</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">--</span> <span class="chip" id="leanTxt">--</span> <span class="chip" id="hndTxt">hands --</span></div>
+  <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="mcChip" style="display:none;background:var(--acc);color:var(--ink)"></span> <span class="chip" id="angTxt">--</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">--</span> <span class="chip" id="leanTxt">--</span> <span class="chip" id="hndTxt">hands --</span></div>
   <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
 </div>
 
@@ -174,7 +188,7 @@ function setActive(a){
 function startSet(){reset();setActive(true);beep();say(SAY[$('voice').value||'en'].go)}
 function stopSet(){const n=reps;setActive(false);beep();say(SAY[$('voice').value||'en'].stop(n))}
 function sayNo(keys){const T=SAY[$('voice').value||'en'];say(T.no+', '+keys.map(k=>T[k]).join(T.and))}
-function goodRep(txt){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · '+txt)}
+function goodRep(txt){reps++;$('reps').textContent=reps;beep();logRep('Rep '+reps+' · '+txt);if(MC&&MC.state==='run')setTimeout(mcRep,40)}
 const isSq=()=>MOVE==='squat'||MOVE==='wb';
 const standingNow=()=>isSq()?state==='up':MOVE==='lunge'?lstate==='stand':(MOVE==='kbr'||MOVE==='kba')?kstate==='low':bstate==='stand';
 function msg(t){$('msg').textContent=t}
@@ -529,6 +543,7 @@ function gesture(names,now){
   let kind=null;
   if(names.length===2&&names.every(n=>n==='Thumb_Up'))kind='start';
   else if(names.length===2&&names.every(n=>n==='Open_Palm'))kind='stop';
+  if(MC&&MC.state!=='idle'&&MC.state!=='done'){$('hndTxt').textContent='metcon running';return}
   $('hndTxt').textContent=kind==='start'?'hands: 👍👍':kind==='stop'?'hands: ✋✋':'hands: '+(names.length?names.map(n=>n||'?').join(' + '):'--');
   const wanted=(kind==='start'&&!active)||(kind==='stop'&&active);
   if(kind&&wanted&&standingNow()&&now-lastSwitch>2500){
@@ -612,6 +627,64 @@ $('camSel').onchange=async e=>{camId=e.target.value;try{await openCam()}catch(er
 $('mov').onchange=e=>setMove(e.target.value);
 $('floor').oninput=e=>{FLOORL=+e.target.value;$('fv').textContent=FLOORL+'°';drawGraph()};
 $('jump').oninput=e=>{JUMPP=+e.target.value;$('jv').textContent=JUMPP+'%'};
+
+// ---- metcon (made in REPGrind, link ?metcon=<base64url json>) ----
+const MC_NAME={squat:'Air squats',wb:'Wall balls',lunge:'Lunges',burpee:'Burpees',burpeej:'Jump burpees',kbr:'Russian KB swings',kba:'American KB swings'};
+let MC=null,mcTick=null,mcCd=5;
+const mmss=ms=>{const t=Math.floor(ms/100)/10,m=Math.floor(t/60);return m+':'+(t-m*60).toFixed(1).padStart(4,'0')};
+function mcParse(txt){
+  try{let c=String(txt).trim();const i=c.indexOf('metcon=');if(i>=0)c=c.slice(i+7).split(/[&#\s]/)[0];
+    c=c.replace(/-/g,'+').replace(/_/g,'/');while(c.length%4)c+='=';
+    const o=JSON.parse(decodeURIComponent(escape(atob(c))));
+    if(!o||o.v!==1||!Array.isArray(o.s)||!o.s.length||o.s.length>60)return null;
+    const s=o.s.map(x=>[Math.floor(+x[0]),String(x[1])]);
+    if(s.some(x=>!(x[0]>0&&x[0]<=999)||!MC_NAME[x[1]]))return null;
+    return {title:'For time',sets:s}}catch(e){return null}}
+function mcShow(){
+  const m=MC;$('mcEmpty').style.display=m?'none':'';$('mcInfo').style.display=m?'':'none';if(!m)return;
+  const tot=m.sets.reduce((a,x)=>a+x[0],0);
+  $('mcTitle').textContent=m.title+' · '+tot+' reps';
+  $('mcList').innerHTML=m.sets.map((x,i)=>`<li class="${m.state==='run'&&i===m.i?'cur':(m.i>i&&m.state!=='idle'?'dn':'')}">${x[0]} ${MC_NAME[x[1]]}</li>`).join('');
+  $('mcStart').disabled=!(m.state==='idle');$('mcQuit').style.display=(m.state==='count'||m.state==='run')?'':'none';
+}
+function mcLoad(txt){const m=mcParse(txt);if(!m){$('mcMsg').textContent='That is not a METGrind metcon code. Make one in REPGrind and tap Open in METGrind.';return false}
+  MC={...m,state:'idle',i:0,t0:0,splits:[]};$('mcMsg').textContent='';$('mcRes').style.display='none';mcShow();return true}
+async function mcStart(noCam){
+  if(!MC||MC.state!=='idle')return;
+  if(!noCam&&!running){await start();if(!running){$('mcMsg').textContent='The camera did not start, so the metcon cannot start.';return}}
+  MC.state='count';MC.i=0;MC.splits=[];$('mov').disabled=true;mcShow();setActive(false);
+  const T=SAY[$('voice').value||'en'];let n=mcCd;
+  const step=()=>{if(!MC||MC.state!=='count')return;
+    if(n>0){$('mcChip').style.display='';$('mcChip').textContent='Starting in '+n;msg('Starting in '+n+'. First: '+MC.sets[0][0]+' '+MC_NAME[MC.sets[0][1]]);if(n<=3)say(String(n));beep();n--;setTimeout(step,1000)}
+    else{MC.state='run';MC.t0=performance.now();MC.tSet=MC.t0;mcBegin(0,true);mcTick=setInterval(mcDraw,100)}};
+  step()}
+function mcBegin(i,first){
+  MC.i=i;const [n,id]=MC[ 'sets'][i];$('mov').value=id;setMove(id);reset();setActive(true);
+  const T=SAY[$('voice').value||'en'];say(first?T.go+'. '+n+' '+MC_NAME[id]:n+' '+MC_NAME[id]);beep();mcShow();mcDraw()}
+function mcDraw(){if(!MC||MC.state!=='run')return;
+  const [n,id]=MC.sets[MC.i];$('mcChip').style.display='';$('mcChip').textContent=(MC.i+1)+'/'+MC.sets.length+' · '+reps+'/'+n+' '+MC_NAME[id]+' · '+mmss(performance.now()-MC.t0);
+  msg('Metcon running: '+n+' '+MC_NAME[id])}
+function mcRep(){
+  if(!MC||MC.state!=='run')return;const [n]=MC.sets[MC.i];mcDraw();if(reps<n)return;
+  const now=performance.now();MC.splits.push({set:MC.sets[MC.i],set_ms:now-MC.tSet,at_ms:now-MC.t0});MC.tSet=now;
+  if(MC.i+1<MC.sets.length)mcBegin(MC.i+1,false);else mcFinish()}
+function mcFinish(){
+  MC.state='done';clearInterval(mcTick);setActive(false);$('mov').disabled=false;
+  const tot=MC.splits[MC.splits.length-1].at_ms,T=SAY[$('voice').value||'en'];
+  beep();setTimeout(beep,180);setTimeout(beep,360);{const fi=($('voice').value||'en')==='fi',m=Math.floor(tot/60000),sc=Math.floor(tot/1000)%60;say(fi?'Valmis. '+m+' minuuttia '+sc+' sekuntia':'Finish. '+m+(m==1?' minute ':' minutes ')+sc+(sc==1?' second':' seconds'))};
+  $('mcChip').textContent='Done · '+mmss(tot);msg('Metcon done in '+mmss(tot));
+  $('mcTime').textContent=mmss(tot);
+  $('mcSplits').innerHTML=MC.splits.map(x=>`<li>${x.set[0]} ${MC_NAME[x.set[1]]} · ${mmss(x.set_ms)}</li>`).join('');
+  $('mcRes').style.display='';mcShow();
+  try{const a=JSON.parse(localStorage.getItem('mg_results')||'[]');a.unshift({d:Date.now(),ms:Math.round(tot),sets:MC.sets});localStorage.setItem('mg_results',JSON.stringify(a.slice(0,30)))}catch(e){}}
+function mcText(){const t=MC.splits[MC.splits.length-1].at_ms;return 'METGrind · '+MC.title+': '+mmss(t)+'\n'+MC.splits.map(x=>x.set[0]+' '+MC_NAME[x.set[1]]+' '+mmss(x.set_ms)).join('\n')}
+function mcQuit(){if(!MC)return;clearInterval(mcTick);MC.state='idle';MC.i=0;setActive(false);$('mov').disabled=false;$('mcChip').style.display='none';msg('Metcon stopped.');mcShow()}
+$('mcLoad').onclick=()=>{if(mcLoad($('mcCode').value))$('mcCode').value=''};
+$('mcStart').onclick=()=>mcStart(false);$('mcQuit').onclick=mcQuit;
+$('mcAgain').onclick=()=>{MC.state='idle';MC.i=0;$('mcRes').style.display='none';$('mcChip').style.display='none';mcShow();window.scrollTo({top:0,behavior:'smooth'})};
+$('mcCopy').onclick=async()=>{try{await navigator.clipboard.writeText(mcText());$('mcCopy').textContent='Copied'}catch(e){$('mcMsg').textContent=mcText()}setTimeout(()=>$('mcCopy').textContent='Copy result',1500)};
+if(location.search.indexOf('metcon=')>=0)mcLoad(location.search);
+window.__mc={load:mcLoad,start:mcStart,get state(){return MC&&MC.state},get i(){return MC&&MC.i},get splits(){return MC&&MC.splits},setCd:n=>{mcCd=n},text:()=>MC&&MC.state==='done'?mcText():''};
 $('mdl').onchange=()=>{if(running){stop();start()}};
 setMove('squat');
 </script>
