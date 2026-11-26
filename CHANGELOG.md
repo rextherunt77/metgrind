@@ -17,6 +17,8 @@ Standalone camera rep-counting test for REPGrind. Not part of the REPGrind app.
 ## v0.4.6
 - **Logo:** the round kettlebell with claw marks, now inside camera corner brackets.
 
+<details><summary>Older versions (9)</summary>
+
 ## v0.4.5
 - **Logo:** the kettlebell is now round (a ball with a handle), with the claw marks.
 
@@ -59,3 +61,5 @@ First versioned release. Air squats only.
 - Live knee-angle graph, rep log, model choice (lite, full, heavy).
 
 Versioning: 0.x while testing. Each change gets a new entry here, the version shown on the page, and a git tag `v0.x`.
+
+</details>
