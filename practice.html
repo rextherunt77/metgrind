@@ -15,6 +15,13 @@ body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,
 h1{font-size:17px;margin:0 0 2px;letter-spacing:.5px}
 h1 b{color:var(--acc)}
 .m-metcon .testonly,.m-test .metonly{display:none!important}
+.m-metcon:not(.t-met) .tb-met,.m-metcon:not(.t-res) .tb-res,.m-metcon:not(.t-his) .tb-his,.m-metcon:not(.t-wod) .tb-wod,.m-metcon:not(.t-set) .tb-set{display:none!important}
+#tabbar{display:none}.m-metcon{padding-bottom:78px}.m-metcon #tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:8;background:#14171c;border-top:1px solid #262c35;padding-bottom:env(safe-area-inset-bottom)}
+#tabbar button{flex:1;min-width:0;background:none;border-radius:0;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:#6b737d;padding:0}#tabbar button svg{width:22px;height:22px}#tabbar button.on{color:var(--acc)}
+.hd{display:flex;align-items:center;justify-content:space-between}.hd h1{margin:0}
+#appMenu{position:fixed;top:56px;right:12px;z-index:25;background:#1b2027;border:1px solid var(--line);border-radius:14px;padding:6px;display:none;min-width:250px;box-shadow:0 10px 30px rgba(0,0,0,.5)}#appMenu.on{display:block}
+.app{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;color:var(--txt);text-decoration:none}.app:active,.app:hover{background:#262d36}.app svg{width:36px;height:36px;flex:none}
+.app b{display:block;font-size:15px}.app small{color:var(--mut);font-size:12px}.app.cur{box-shadow:inset 0 0 0 2px var(--acc)}.app .ck{margin-left:auto;color:var(--acc);font-weight:700}
 a.nav{display:inline-block;margin:2px 0 8px;color:var(--acc);font-size:14px;font-weight:600;text-decoration:none}
 .beta{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink);background:var(--warn);border-radius:6px;padding:2px 6px;vertical-align:2px;margin-left:4px}
 .mct{font-size:19px;font-weight:800;margin:6px 0}.mcs{color:var(--mut);font-size:13px;margin:6px 0}
@@ -58,11 +65,12 @@ small{color:var(--mut)}
 </style>
 </head>
 <body class="m-test">
-<h1><svg viewBox="-60 -60 120 120" width="26" height="26" aria-hidden="true" style="vertical-align:-5px;margin-right:6px"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><path d="M-44 -28V-44H-28M28 -44H44V-28M44 28V44H28M-28 44H-44V28" fill="none" stroke="#14171c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(0 2) scale(.8)"><path d="M-17 -14V-28Q-17 -42 -4 -42H4Q17 -42 17 -28V-14" fill="none" stroke="#14171c" stroke-width="10" stroke-linejoin="round"/><circle cx="0" cy="14" r="32" fill="#14171c"/><g transform="translate(0 14) scale(.52)" fill="#ff8c00"><path transform="translate(-14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.1 1.15)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g></svg>MET<b>Grind</b> <small id="ver">v0.5.0</small> <span class="beta">beta</span></h1>
-<div class="sub metonly">Do metcons made in REPGrind: the phone camera counts the reps and times the metcon. Everything runs on this phone; no video is sent anywhere.</div>
+<div class="hd"><h1><svg viewBox="-60 -60 120 120" width="26" height="26" aria-hidden="true" style="vertical-align:-5px;margin-right:6px"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><path d="M-44 -28V-44H-28M28 -44H44V-28M44 28V44H28M-28 44H-44V28" fill="none" stroke="#14171c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(0 2) scale(.8)"><path d="M-17 -14V-28Q-17 -42 -4 -42H4Q17 -42 17 -28V-14" fill="none" stroke="#14171c" stroke-width="10" stroke-linejoin="round"/><circle cx="0" cy="14" r="32" fill="#14171c"/><g transform="translate(0 14) scale(.52)" fill="#ff8c00"><path transform="translate(-14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.1 1.15)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g></svg>MET<b>Grind</b> <small id="ver">v0.6.0</small> <span class="beta">beta</span></h1><button id="bApps" aria-label="Apps" title="Apps" style="flex:none;min-width:0;width:44px;padding:8px;background:none;color:var(--txt)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button></div>
+<div id="appMenu"><a class="app" href="https://rextherunt77.github.io/repgrind/" target="_blank" rel="noopener"><svg viewBox="-60 -60 120 120"><use href="#rglogo"/></svg><div><b>REPGrind</b><small>Rep counter – count reps, results, export</small></div></a><a class="app" href="https://rextherunt77.github.io/wodgrind/" target="_blank" rel="noopener"><svg viewBox="-60 -60 120 120"><use href="#wglogo"/></svg><div><b>WODGrind</b><small>Workout timer for coaches</small></div></a><a class="app cur" id="appMet"><svg viewBox="-60 -60 120 120"><use href="#mglogo"/></svg><div><b>METGrind <small style="display:inline;color:var(--acc)">beta</small></b><small>Camera counts your metcon</small></div><span class="ck">✓</span></a></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="rglogo"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><g fill="#b85a00" transform="translate(2 3)"><path transform="translate(-24 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(-8 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(8 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(24 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.15 1.3)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g><g fill="#14171c"><path transform="translate(-24 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(-8 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(8 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(24 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.15 1.3)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g><g id="wglogo"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><rect x="-9" y="-50" width="18" height="10" rx="3" fill="#14171c"/><circle cx="0" cy="6" r="41" fill="none" stroke="#14171c" stroke-width="9"/><g fill="#14171c" transform="translate(0 6) scale(.62)"><path transform="translate(-20 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(20 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.1 1.15)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g><g id="mglogo"><rect x="-60" y="-60" width="120" height="120" rx="30" fill="#ff8c00"/><path d="M-44 -28V-44H-28M28 -44H44V-28M44 28V44H28M-28 44H-44V28" fill="none" stroke="#14171c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(0 2) scale(.8)"><path d="M-17 -14V-28Q-17 -42 -4 -42H4Q17 -42 17 -28V-14" fill="none" stroke="#14171c" stroke-width="10" stroke-linejoin="round"/><circle cx="0" cy="14" r="32" fill="#14171c"/><g transform="translate(0 14) scale(.52)" fill="#ff8c00"><path transform="translate(-14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="translate(14 0) rotate(-9)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/><path transform="rotate(62) scale(1.1 1.15)" d="M0 -38 L5 -25 L3 -18 L8 -6 L6 3 L9 16 L5 38 L1 18 L-2 5 L0 -3 L-4 -16 L-2 -25 Z"/></g></g></g></defs></svg>
+<div class="sub metonly tb-met">Do metcons made in REPGrind: the phone camera counts the reps and times the metcon. Everything runs on this phone; no video is sent anywhere.</div>
 <div class="sub testonly">Practice the movements: pick a movement, film yourself and watch the counting. The sliders set what counts as a rep; METGrind uses the same values on this phone. Everything runs on this phone; no video is sent anywhere.</div>
 <a class="nav testonly" href="./">← METGrind</a>
-<div class="card metonly" id="mcCard" style="margin-top:0">
+<div class="card metonly tb-met" id="mcCard" style="margin-top:0">
   <b class="h">Metcon</b>
   <div id="mcEmpty" class="mcs">Make a metcon in REPGrind (chipper or rep scheme) and tap <b>Open in METGrind</b>, or paste its link or code here.</div>
   <div id="mcInfo" style="display:none"><div class="mct" id="mcTitle"></div><ol id="mcList"></ol></div>
@@ -71,7 +79,7 @@ small{color:var(--mut)}
   <small id="mcMsg"></small>
 </div>
 
-<div class="card metonly" id="wcCard">
+<div class="card metonly tb-wod" id="wcCard">
   <b class="h">WOD Code · camera here, results on another phone</b>
   <div id="wcOff"><div class="mcs">Join the coach's WOD Code (made in REPGrind, WOD Code tab). Every rep the camera counts goes to the coach's phone like a tap on a rep button. The coach's workout loads here and starts with the coach.</div>
   <div class="row"><input id="wcCode" class="wci" maxlength="4" placeholder="Code" autocomplete="off" style="flex:0 0 90px;text-transform:uppercase;letter-spacing:3px;font-weight:700"><input id="wcName" class="wci" maxlength="19" placeholder="Your name" autocomplete="off"><button id="wcJoin" class="p" style="flex:0 0 90px;min-width:0">Join</button></div></div>
@@ -88,18 +96,18 @@ small{color:var(--mut)}
   <small id="movHelp"></small>
 </div>
 
-<div class="stage" id="stage">
+<div class="stage tb-met" id="stage">
   <div class="inner"><video id="v" playsinline muted></video><canvas class="ov" id="ov"></canvas></div>
   <div class="hud"><div class="big" id="reps">0</div><span class="chip" id="mcChip" style="display:none;background:var(--acc);color:var(--ink)"></span> <span class="chip" id="angTxt">--</span> <span class="chip" id="actTxt">set not started</span> <span class="chip" id="stTxt">ready</span><br><span class="chip" id="hipTxt">--</span> <span class="chip" id="leanTxt">--</span> <span class="chip" id="hndTxt">hands --</span></div>
   <div class="msg" id="msg">Press Start camera. Prop the phone up so your whole body is in view, from the side or front.</div>
 </div>
 
-<div class="row">
+<div class="row tb-met">
   <button id="bStart" class="p">Start camera</button>
   <button id="bFlip" class="sec" disabled>Flip camera</button>
   <button id="bReset" class="sec testonly">Reset</button>
 </div>
-<div class="card" id="camCard" style="display:none">
+<div class="card tb-met" id="camCard" style="display:none">
   <label>Camera <select id="camSel"></select></label>
   <label style="margin-top:8px">Zoom <b id="zv">1.0×</b></label>
   <div style="display:flex;gap:8px;align-items:center"><button class="sec" id="zOut" style="flex:0 0 52px;min-width:0">−</button><input type="range" id="zoom" style="flex:1" disabled><button class="sec" id="zIn" style="flex:0 0 52px;min-width:0">+</button></div>
@@ -113,7 +121,7 @@ small{color:var(--mut)}
   <button id="bSim" class="sec">Simulate (no camera)</button>
 </div>
 
-<div class="card">
+<div class="card tb-set">
   <label>Voice for "no rep" and its cause
     <select id="voice"><option value="">off</option><option value="en" selected>English</option><option value="fi">Suomi</option></select>
   </label>
@@ -177,7 +185,8 @@ small{color:var(--mut)}
 <div class="card testonly"><canvas id="gr" width="600" height="220"></canvas><small id="grCap"></small></div>
 
 <div class="card testonly"><b class="h">Reps</b><ul id="log"></ul><small id="fps"></small></div>
-<div id="mgView" class="metonly" style="display:none">
+<div class="tb-res metonly" id="resEmpty"><div class="card"><div class="mcs">No result yet. Do a metcon and the result, charts and analysis appear here.</div></div></div>
+<div id="mgView" class="metonly tb-res" style="display:none">
 <div class="card" id="mcRes"><b class="h">Result</b><div class="mct" id="mcTime"></div><div class="row"><button id="mcCopy" class="sec">Copy result</button><button id="mcAgain" class="p">Do it again</button></div></div>
 <div class="card"><h2>Rep chart</h2><div id="mgRace"></div><div class="note" id="mgRaceNote" style="margin-top:4px"></div></div>
 <div class="card"><h2>Time per rep</h2><canvas id="c1"></canvas><div class="leg"><span><span class="sw" style="background:var(--acc)"></span>rep</span><span><span class="sw" style="background:#4a5563"></span>change of movement</span><span><span class="sw" style="background:var(--acc2)"></span>average</span></div></div>
@@ -185,9 +194,10 @@ small{color:var(--mut)}
 <div class="card"><h2>Analysis</h2><div class="grid2" id="an"></div><div class="note" id="anNote" style="margin-top:8px"></div></div>
 <div class="card"><h2>Sets</h2><table><thead><tr><th>#</th><th>Movement</th><th>Reps</th><th>Time</th><th>Avg rep</th><th>Change</th></tr></thead><tbody id="sets"></tbody></table></div>
 </div>
-<div class="card metonly" id="mgHist" style="display:none"><h2>Previous metcons</h2><div id="mgHistList"></div></div>
+<div class="tb-his metonly" id="hisEmpty"><div class="card"><div class="mcs">No previous metcons yet. Finished metcons are listed here.</div></div></div>
+<div class="card metonly tb-his" id="mgHist" style="display:none"><h2>Previous metcons</h2><div id="mgHistList"></div></div>
 
-<a class="nav metonly" href="practice.html">Practice movements →</a>
+<div class="card metonly tb-set"><b class="h">Practice movements</b><div class="mcs">Test how each movement is counted and tune the sliders. The sliders are shared with METGrind.</div><a class="nav" href="practice.html" style="margin:0">Practice movements →</a></div>
 <script type="module">
 const $=id=>document.getElementById(id);
 const V='0.10.14';
@@ -719,7 +729,7 @@ function mcLoad(txt){const m=mcParse(txt);if(!m){$('mcMsg').textContent='That is
 async function mcStart(noCam){
   if(!MC||MC.state!=='idle')return;
   if(!noCam&&!running&&!window.__noCam){await start();if(!running){$('mcMsg').textContent='The camera did not start, so the metcon cannot start.';return}}
-  MC.state='count';MC.i=0;MC.splits=[];MC.reps=[];$('mgView').style.display='none';$('mov').disabled=true;mcShow();setActive(false);
+  MC.state='count';MC.i=0;MC.splits=[];MC.reps=[];$('mgView').style.display='none';showTab('met');$('mov').disabled=true;mcShow();setActive(false);
   const T=SAY[$('voice').value||'en'];let n=mcCd;
   const step=()=>{if(!MC||MC.state!=='count')return;
     if(n>0){$('mcChip').style.display='';$('mcChip').textContent='Starting in '+n;msg('Starting in '+n+'. First: '+MC.sets[0][0]+' '+MC_NAME[MC.sets[0][1]]);if(n<=3)say(String(n));beep();n--;setTimeout(step,1000)}
@@ -748,7 +758,7 @@ function mcText(){return MG_VIEW?mgText(MG_VIEW):''}
 function mcQuit(){if(!MC)return;clearInterval(mcTick);$('mgView').style.display='none';MC.state='idle';MC.i=0;setActive(false);$('mov').disabled=false;$('mcChip').style.display='none';msg('Metcon stopped.');mcShow()}
 $('mcLoad').onclick=()=>{if(mcLoad($('mcCode').value))$('mcCode').value=''};
 $('mcStart').onclick=()=>mcStart(false);$('mcQuit').onclick=mcQuit;
-$('mcAgain').onclick=()=>{if(!MG_VIEW)return;MC={title:'For time',sets:MG_VIEW.sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';$('mcChip').style.display='none';mcShow();window.scrollTo({top:0,behavior:'smooth'})};
+$('mcAgain').onclick=()=>{if(!MG_VIEW)return;MC={title:'For time',sets:MG_VIEW.sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';$('mcChip').style.display='none';showTab('met');mcShow();window.scrollTo({top:0,behavior:'smooth'})};
 $('mcCopy').onclick=async()=>{try{await navigator.clipboard.writeText(mcText());$('mcCopy').textContent='Copied'}catch(e){$('mcMsg').textContent=mcText()}setTimeout(()=>$('mcCopy').textContent='Copy result',1500)};
 if(location.search.indexOf('metcon=')>=0)mcLoad(location.search);
 window.__t.goodRep=goodRep;window.__mc={fake:r=>mgShowRes(r,false),load:mcLoad,start:mcStart,get state(){return MC&&MC.state},get i(){return MC&&MC.i},get splits(){return MC&&MC.splits},setCd:n=>{mcCd=n},text:()=>MC&&MC.state==='done'?mcText():''};
@@ -823,8 +833,7 @@ function mgRender(r,live){const a=mgAnalyse(r);$('mgRace').innerHTML=mgRaceSvg(r
   $('mgRaceNote').textContent=live?'Live: updates every second and after each rep. Dashed line = steady pace from the start.':'Dashed line = steady pace from the start. Steps at the top of a set are the movements of the metcon.'}
 function mgLive(){if(!MC||MC.state!=='run')return;const v=$('mgView');v.style.display='';$('mcRes').style.display='none';
   mgRender({sets:MC.sets,reps:MC.reps,el:performance.now()-MC.t0},true)}
-function mgShowRes(r,scroll){MG_VIEW=r;$('mgView').style.display='';$('mcRes').style.display='';$('mcTime').textContent=mmss(r.ms)+' · '+new Date(r.d).toLocaleDateString();mgRender(r,false);mgHist();
-  if(scroll)setTimeout(()=>$('mgView').scrollIntoView({behavior:'smooth',block:'start'}),50)}
+function mgShowRes(r,scroll){MG_VIEW=r;$('mgView').style.display='';$('mcRes').style.display='';$('mcTime').textContent=mmss(r.ms)+' · '+new Date(r.d).toLocaleDateString();mgRender(r,false);mgHist();if(scroll)showTab('res')}
 function mgResults(){try{return JSON.parse(localStorage.getItem('mg_results')||'[]').filter(x=>x&&x.reps&&x.sets)}catch(e){return[]}}
 function mgHist(){const a=mgResults(),c=$('mgHist');c.style.display=a.length?'':'none';
   $('mgHistList').innerHTML=a.map((r,i)=>{const tot=r.sets.reduce((s,x)=>s+x[0],0);return `<button class="rhi" data-i="${i}"><b>${mmss(r.ms)}</b> · ${tot} reps · ${new Date(r.d).toLocaleDateString()}<span class="rhn">${escH(r.sets.map(x=>x[0]+' '+MC_NAME[x[1]]).join(', '))}</span></button>`}).join('');
@@ -847,7 +856,7 @@ function wcUI(api){
   const st=api.coachState,sets=wcSets(st);$('wcLoad').disabled=!sets;
   $('wcMsg').textContent=st&&!sets&&st.m!==0&&st.m!==1?'The coach\'s workout has movements METGrind cannot count yet. Reps still go to the coach.':(st&&(st.m===0||st.m===1)?'The coach counts plain reps. Pick a movement under Movement test; its reps go to the coach.':'');
   if(st){
-    if(sets&&st.sid!==wcSid&&MC&&MC.state==='idle'||sets&&st.sid!==wcSid&&!MC){wcSid=st.sid;MC={title:'Coach\'s workout',sets:sets.map(x=>[x[0],x[1]]),state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';mcShow()}
+    if(sets&&st.sid!==wcSid&&MC&&MC.state==='idle'||sets&&st.sid!==wcSid&&!MC){wcSid=st.sid;MC={title:'Coach\'s workout',sets:sets.map(x=>[x[0],x[1]]),state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';showTab('met');mcShow()}
     if(st.s===1&&wcPrevS!==1&&$('wcFollow').checked&&MC&&MC.state==='idle'){mcCd=Math.max(1,Math.round(st.cd-(Date.now()-api.at)/1000));mcStart(false)}
     wcPrevS=st.s}
 }
@@ -856,7 +865,7 @@ function wcJoin(code,name){code=String(code).toUpperCase().replace(/[^A-Z0-9]/g,
   try{localStorage.setItem('mg_name',name)}catch(e){}wcSid=null;wcPrevS=0;$('wcMsg').textContent='';MG_NET.join(code,name,wcUI)}
 $('wcJoin').onclick=()=>wcJoin($('wcCode').value,$('wcName').value.trim());
 $('wcLeave').onclick=()=>{MG_NET.leave();wcUI(MG_NET)};
-$('wcLoad').onclick=()=>{const sets=wcSets(MG_NET.coachState);if(sets&&(!MC||MC.state==='idle'||MC.state==='done')){MC={title:'Coach\'s workout',sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';mcShow()}};
+$('wcLoad').onclick=()=>{const sets=wcSets(MG_NET.coachState);if(sets&&(!MC||MC.state==='idle'||MC.state==='done')){MC={title:'Coach\'s workout',sets,state:'idle',i:0,t0:0,splits:[],reps:[]};$('mgView').style.display='none';showTab('met');mcShow()}};
 try{$('wcName').value=localStorage.getItem('mg_name')||''}catch(e){}
 {const m=(location.search+location.hash).match(/wod=([A-Za-z0-9]{4})/);if(m){$('wcCode').value=m[1].toUpperCase();if($('wcName').value)setTimeout(()=>wcJoin(m[1],$('wcName').value.trim()),300)}}
 $('mdl').onchange=()=>{if(running){stop();start()}};
@@ -870,6 +879,20 @@ if(!PRACTICE)$('gest').checked=false;
  ids.forEach(id=>{const el=$(id);if(!el||sv[id]==null)return;if(el.type==='checkbox')el.checked=!!sv[id];else el.value=sv[id];el.dispatchEvent(new Event(ev(el)))});
  const save=()=>{const o={};ids.forEach(id=>{const el=$(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});try{localStorage.setItem('mg_thr',JSON.stringify(o))}catch(e){}};
  ids.forEach(id=>{const el=$(id);el&&el.addEventListener(ev(el),save)})}
+
+// ---- bottom navigation like REPGrind: Metcon, Results, History, WOD Code, Settings ----
+const TABS=[['met','Metcon','<path d="M12 8v5l3 2"/><circle cx="12" cy="13" r="8"/><path d="M9 2h6"/>'],['res','Results','<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>'],['his','History','<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>'],['wod','WOD Code','<circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/>'],['set','Settings','<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>']];
+let TAB='met';
+function showTab(t){TAB=t;TABS.forEach(x=>document.body.classList.toggle('t-'+x[0],x[0]===t));
+  document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $('resEmpty').style.display=$('mgView').style.display==='none'?'':'none';$('hisEmpty').style.display=$('mgHist').style.display==='none'?'':'none';
+  if(t==='res'&&typeof MG_VIEW!=='undefined'&&MG_VIEW&&$('mgView').style.display!=='none')!(MC&&MC.state==='run')&&mgRender(MG_VIEW,false);window.scrollTo(0,0)}
+{const nav=document.createElement('nav');nav.id='tabbar';
+ nav.innerHTML=TABS.map(([t,l,ic])=>`<button data-t="${t}" id="tab_${t}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg><span>${l}</span></button>`).join('');
+ document.body.appendChild(nav);nav.querySelectorAll('button').forEach(b=>b.onclick=()=>showTab(b.dataset.t))}
+$('bApps').onclick=e=>{e.stopPropagation();$('appMenu').classList.toggle('on')};$('appMet').onclick=e=>{e.preventDefault();$('appMenu').classList.remove('on')};document.addEventListener('click',e=>{if(!e.target.closest('#appMenu'))$('appMenu').classList.remove('on')});
+window.__tab=showTab;
+showTab('met');
 setMove('squat');
 </script>
 </body>

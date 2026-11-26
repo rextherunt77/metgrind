@@ -2,6 +2,11 @@
 
 Standalone camera rep-counting test for RepGrind. Not part of the RepGrind app.
 
+## v0.6.0
+- **Bottom tabs like REPGrind:** Metcon, Results, History, WOD Code and Settings. Starting a metcon opens the Metcon tab; a finished metcon opens Results.
+- **Apps menu** (grid button at the top): REPGrind, WODGrind, METGrind.
+- Settings tab: voice setting and the link to Practice movements.
+
 ## v0.5.0
 - **Practice movements page** (`practice.html`): movement testing, sliders, simulate and graph moved off the METGrind page. METGrind itself now shows only the metcon, camera, WOD Code and results. The sliders are shared between the pages.
 - **Voice framing help:** before a workout the app says "Move left", "Move right", "Step back" or "Step closer" until you are fully in the picture, then "Good, you are in the frame. Ready". Uses the voice setting; silent during a workout.
