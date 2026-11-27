@@ -2,6 +2,12 @@
 
 Standalone camera rep-counting test for REPGrind. Not part of the REPGrind app.
 
+## v0.8.0
+- **More movements:** push-up, sit-up, toes-to-bar, box jump, box jump over (both feet must touch the box, hips not checked) and single-under. Each has its own sliders and simulator on the Practice page and works in metcons. Not tested on a real camera yet; thresholds are first guesses.
+
+## v0.7.0
+- **Pull-ups.** New movement for the camera and for metcons. Film from the front or the side with both arms and the head in the picture. Hang with straight arms to start; a rep counts when the chin comes up to the hands (the bar) and the arms are straight again. "No rep, chin not over the bar" otherwise. Sliders: straight-arm angle and how far the chin must be above the hands. Not tested on a real camera yet; the chin line is a first guess.
+
 ## v0.6.0
 - **Bottom tabs like REPGrind:** Metcon, Results, History, WOD Code and Settings. Starting a metcon opens the Metcon tab; a finished metcon opens Results.
 - **Apps menu** (grid button at the top): REPGrind, WODGrind, METGrind.
